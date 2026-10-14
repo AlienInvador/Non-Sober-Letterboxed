@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Mirrors design/tokens.ts (spec section 5). Keep both in sync. */
+@theme inline {
+  --color-bg: #2A2522;
+  --color-card: #332D29;
+  --color-raised: #3D3631;
+  --color-selected: #48403A;
+  --color-track: #524943;
+  --color-line: rgba(242, 237, 230, .06);
+  --color-text: #F2EDE6;
+  --color-body: #DED6CF;
+  --color-muted: #ABA29A;
+  --color-faint: #948B83;
+  --color-accent: #8B5CFF;
+  --color-accent-fill: #7444EC;
+  --color-note: #C9B5FF;
+  --color-drunk: #FF2E88;
+  --color-high: #B6FF3B;
+  --color-both: #E8A0FF;
+  --color-sober: #8A94A6;
+
+  /* shadcn semantic aliases */
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --color-border: var(--color-line);
+  --color-input: var(--color-raised);
+  --color-ring: var(--color-accent);
+  --color-primary: var(--color-accent-fill);
+  --color-primary-foreground: #fff;
+  --color-popover: var(--color-raised);
+  --color-popover-foreground: var(--color-text);
+  --color-destructive: var(--color-drunk);
+
+  --radius-poster: 6px;
+  --radius-control: 12px;
+  --radius-card: 16px;
+  --radius-hero: 24px;
+
+  --font-display: var(--font-fraunces), serif;
+  --font-sans: var(--font-figtree), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-note: var(--font-caveat), cursive;
+
+  --ease-out-soft: cubic-bezier(.2, .8, .2, 1);
+}
+
+html {
+  background: #2A2522;
+  color: #F2EDE6;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-bg font-sans text-text antialiased;
+}
+
+.font-display {
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  letter-spacing: -0.025em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
