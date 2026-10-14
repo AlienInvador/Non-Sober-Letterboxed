@@ -1,8 +1,8 @@
-# Afterhours Implementation Plan
+# Geeked-Drunk Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build Afterhours, a 21+ social movie tracker where friends and crews log watch sessions under the influence (drunk / high / both) and see ratings split by influence.
+**Goal:** Build Geeked-Drunk, a 21+ social movie tracker where friends and crews log watch sessions under the influence (drunk / high / both) and see ratings split by influence.
 
 **Architecture:** Next.js App Router web app over a Supabase Postgres backend. Business rules (21+, rating/recommend validity, visibility) live in Postgres constraints, triggers, RLS, and a stats view so a future Expo app reuses them. TMDB is reached only through server code and cached in a `movies` table.
 
@@ -19,13 +19,15 @@
 - Discover minimum log count: `MIN_LOGS = 5`.
 - TMDB key only server-side (`TMDB_API_KEY`, no `NEXT_PUBLIC_` prefix). Movie cache refresh after 24h.
 - Footer copy exactly: "This product uses the TMDB API but is not endorsed or certified by TMDB."
-- Colors exactly: bg `#07060B`, surface `#110E1A`, surface-2 `#1A1526`, line `rgba(255,255,255,.08)`, text `#F4EEFF`, muted `#9A90B3`, accent `#8B5CFF`, drunk `#FF2E88`, high `#B6FF3B`, sober `#7A8BA8`, both = gradient drunk→high.
-- Fonts: Unbounded (display), Manrope (body), JetBrains Mono (numbers). Sentence case; no uppercase letter-spaced labels.
+- Design tokens, fonts, motion, voice: exactly spec section 5 ("Geeked-Drunk Cozy"); the approved prototype https://claude.ai/artifact/SneR2fm2nbRL8UnJRqwmJ7 is the visual reference. No glow, blur, or background gradients except the backdrop-hero fade.
+- Env names exactly: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (server/test only), `SUPABASE_DB_URL` (migrations/tests only), `TMDB_API_KEY` (server only). Never print secret values.
+- Database: the cloud Supabase project (no Docker). Migrations: `npx supabase db push --db-url "$SUPABASE_DB_URL"`. Tests: `npx supabase test db --db-url "$SUPABASE_DB_URL"`, each test file wrapped in `begin; ... rollback;`.
+- Copy: a log is a "sesh"; healthy-use line on gate and landing.
 - Nothing may reuse Letterboxd code, assets, copy, branding, or the patterns listed in spec §6.
 - `prefers-reduced-motion` disables haze, flicker, tilt, wobble.
 - Influence is never conveyed by color alone (always label or icon too).
 
-**Prerequisites (one-time, user):** Node 20+, Docker Desktop running (for `supabase start`), Supabase CLI (`npm i -D supabase`), a TMDB API read key, a Supabase cloud project for deploy (Phase 6).
+**Prerequisites:** Node 20+, Supabase CLI (`npm i -D supabase`), `.env.local` filled (see Global Constraints).
 
 ## Review Focus
 
@@ -111,24 +113,24 @@ e2e/*.spec.ts                   Playwright
 - Test: `tests/unit/tokens.test.ts`
 
 **Interfaces:**
-- Produces: `tokens` from `@/design/tokens`: `{ color: { bg, surface, surface2, line, text, muted, accent, drunk, high, sober }, gradient: { both: string }, radius: { poster: '14px' }, font: { display: 'Unbounded', body: 'Manrope', mono: 'JetBrains Mono' } }`. Tailwind classes `bg-bg`, `text-muted`, `text-drunk`, `bg-high`, etc. via `@theme`.
+- Produces: `tokens` from `@/design/tokens`: `{ color: { bg, card, raised, selected, track, line, text, body, muted, faint, accent, accentFill, note, drunk, high, both, sober }, gradient: { bothDot: string }, radius: { poster: '6px', control: '12px', card: '16px', hero: '24px' }, font: { display: 'Fraunces', body: 'Figtree', mono: 'JetBrains Mono', note: 'Caveat' }, motion: { ease: 'cubic-bezier(.2,.8,.2,1)', fast: 150, base: 200, slow: 250, stagger: 35 } }` with values from spec section 5. Tailwind classes `bg-bg`, `bg-card`, `text-muted`, `text-drunk`, etc. via `@theme`.
 
 - [ ] **Step 1: Write failing test**
 
 ```ts
 import { tokens } from '@/design/tokens'
 test('influence colors match spec', () => {
+  expect(tokens.color.bg).toBe('#2A2522')
   expect(tokens.color.drunk).toBe('#FF2E88')
   expect(tokens.color.high).toBe('#B6FF3B')
-  expect(tokens.color.sober).toBe('#7A8BA8')
-  expect(tokens.color.accent).toBe('#8B5CFF')
-  expect(tokens.gradient.both).toContain('#FF2E88')
-  expect(tokens.gradient.both).toContain('#B6FF3B')
+  expect(tokens.color.sober).toBe('#8A94A6')
+  expect(tokens.color.accentFill).toBe('#7444EC')
+  expect(tokens.font.display).toBe('Fraunces')
 })
 ```
 
 - [ ] **Step 2:** `npx vitest run tests/unit/tokens.test.ts` → FAIL (module not found).
-- [ ] **Step 3:** Scaffold; install `motion zod @supabase/ssr @supabase/supabase-js`, dev `vitest @vitejs/plugin-react @playwright/test supabase`; `npx shadcn@latest init`. Write `design/tokens.ts` (all Global Constraints values) and mirror them as CSS vars in `globals.css` `@theme`. Load fonts with `next/font/google` in `app/layout.tsx`; add footer with exact TMDB attribution copy. `.env.example`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `TMDB_API_KEY`.
+- [ ] **Step 3:** Scaffold; install `motion zod @supabase/ssr @supabase/supabase-js`, dev `vitest @vitejs/plugin-react @playwright/test supabase`; `npx shadcn@latest init`. Write `design/tokens.ts` (all Global Constraints values) and mirror them as CSS vars in `globals.css` `@theme`. Load fonts with `next/font/google` in `app/layout.tsx`; add footer with exact TMDB attribution copy. `.env.example` lists the five env names from Global Constraints with empty values. Fraunces loads with the `SOFT` and `WONK` axes.
 - [ ] **Step 4:** `npx vitest run` → PASS; `npm run build` → succeeds.
 - [ ] **Step 5:** Commit `feat: scaffold app with Afterhours design tokens`.
 
@@ -314,7 +316,7 @@ test('non-200 throws TmdbError', ...)
 ```
 
 - [ ] **Step 2:** `npx vitest run tests/unit/tmdb.test.ts` → FAIL.
-- [ ] **Step 3:** Implement with `Authorization: Bearer ${process.env.TMDB_API_KEY}`, `import 'server-only'`. Route handler returns `searchMovies` JSON; on `TmdbError` → 502 `{ error: 'tmdb_unavailable' }`.
+- [ ] **Step 3:** Implement with `import 'server-only'`; auth = `?api_key=` when `TMDB_API_KEY.length <= 40`, else `Authorization: Bearer`. Route handler returns `searchMovies` JSON; on `TmdbError` → 502 `{ error: 'tmdb_unavailable' }`.
 - [ ] **Step 4:** → PASS.
 - [ ] **Step 5:** Commit `feat: TMDB search and movie cache`.
 
@@ -492,6 +494,22 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 
 ## Phase 6 — Polish and ship
 
+### Task 16b: Landing page
+
+**Files:**
+- Create: `components/landing/landing.tsx` (rendered at `/` when signed out), `components/marquee.tsx`, `components/poster-fan.tsx`, `components/line-art.tsx`
+- Test: `e2e/landing.spec.ts`
+
+**Interfaces:**
+- Consumes: tokens (Task 1), `posterUrl` (Task 7), `rankForDiscover` (Task 13) for marquee stats (fallback to static seed picks when fewer than 5 qualify).
+- Produces: signed-out `/` (after gate) renders Landing; signed-in `/` renders Tonight. Middleware no longer forces login on `/`.
+
+- [ ] **Step 1: Failing e2e:** signed-out user with `age_ok` cookie at `/` sees heading "Movies hit different drunk or high." and a "Get in" link to `/auth/login`; TMDB attribution text present; with `reducedMotion: 'reduce'` the marquee track has no running animation.
+- [ ] **Step 2:** → FAIL.
+- [ ] **Step 3:** Implement per prototype `Landing.dc.html`: hero, poster fan, wave-edged marquee, 01/02/03 steps, split ratings, crews with line art, closing CTA. Scroll reveal via `motion` `whileInView`.
+- [ ] **Step 4:** → PASS.
+- [ ] **Step 5:** Commit `feat: landing page`.
+
 ### Task 17: Motion polish, accessibility pass, seed, deploy
 
 **Files:**
@@ -502,4 +520,4 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 - [ ] **Step 2:** → FAIL (or pass parts).
 - [ ] **Step 3:** Fix violations; add drunk wobble / high drift badge hover; seed 6 demo users, 2 crews, ~60 sessions over 20 real TMDB ids (ensure ≥ 5 public logs on several movies so Discover is populated).
 - [ ] **Step 4:** Full suite: `npx supabase test db && npx vitest run && npx playwright test` → all PASS; `npm run build` succeeds.
-- [ ] **Step 5:** Deploy: push migrations to the Supabase cloud project (`npx supabase db push`), set Vercel env vars, deploy; smoke-test gate → login → log → movie page on the live URL. Commit `chore: polish, seed, deploy config`.
+- [ ] **Step 5:** Deploy: migrations are already on the cloud project; connect the GitHub repo to Netlify (Next.js runtime), set env vars in Netlify (never commit them), deploy from `main`; smoke-test gate → login → log → movie page on the live URL. Commit `chore: polish, seed, deploy config`.

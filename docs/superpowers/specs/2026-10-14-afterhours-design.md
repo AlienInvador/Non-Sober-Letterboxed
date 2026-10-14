@@ -1,11 +1,11 @@
-# Afterhours — Design Spec
+# Geeked-Drunk — Design Spec
 
 Date: 2026-10-14
 Status: Approved in brainstorming, pending written-spec review
 
 ## 1. Purpose
 
-Afterhours is a social movie tracker for adults (21+) who watch movies drunk, high, or both. Its core is logging **watch sessions** under the influence and sharing them with friends and small groups ("crews"). Public reviews and aggregate ratings exist but are secondary.
+Geeked-Drunk is a social movie tracker for adults (21+) who watch movies drunk, high, or both. Its core is logging **watch sessions** under the influence and sharing them with friends and small groups ("crews"). Public reviews and aggregate ratings exist but are secondary.
 
 It borrows Letterboxd's core feature set (log, review, lists, watchlist, social feed) but is deliberately distinct in product focus, social model, and visual design.
 
@@ -151,6 +151,7 @@ Search: ⌘K command palette (movies, people, lists).
 
 ### Screens
 
+0. **Landing** (`/` when signed out, after the gate): editorial hero, poster fan, marquee, how it works 01/02/03, split-ratings section, crews section, closing CTA, TMDB attribution.
 1. **Age gate** (`/gate`) — full-screen DOB entry. Under 21: polite exit screen. Pass: sets `age_ok` cookie.
 2. **Tonight** (home) — feed of friend and crew sessions (poster, influence badge, stars, review snippet, cheers). Top rail "Hitting tonight": crew-recommended movies that are in your queue.
 3. **Log sheet** — slides up from anywhere. Steps: search movie → influence chips (Drunk / High; both selected = Both; small "sober" link) → stars → recommend toggle (label follows influence). Collapsed optional section: companions, visibility (default friends), review, rewatch.
@@ -167,58 +168,77 @@ Search: ⌘K command palette (movies, people, lists).
 - TMDB unavailable: cached movies still render; search shows a retry.
 - Failed session save: sheet stays open with inputs preserved and an error message.
 
-## 5. Design system — "Afterhours Neon"
+## 5. Design system — "Geeked-Drunk Cozy"
+
+Approved prototype: https://claude.ai/artifact/SneR2fm2nbRL8UnJRqwmJ7 (the visual source of truth for layout, spacing, and copy).
+
+Direction: cozy, warm, organic, flat. Like a dim living room, not a neon club. No glow, no backdrop blur, no glassmorphism, no background blobs, no colored card outlines.
 
 ### Color tokens
 
 | Token | Value | Role |
 |---|---|---|
-| `bg` | `#07060B` | page background |
-| `surface` | `#110E1A` | cards |
-| `surface-2` | `#1A1526` | sheets, raised |
-| `line` | `rgba(255,255,255,.08)` | borders |
-| `text` | `#F4EEFF` | primary text |
-| `muted` | `#9A90B3` | secondary text |
-| `accent` | `#8B5CFF` | primary actions, focus |
-| `drunk` | `#FF2E88` | Drunk data and UI |
-| `high` | `#B6FF3B` | High data and UI |
-| `both` | gradient `drunk → high` | Both |
-| `sober` | `#7A8BA8` | Sober, low emphasis |
+| `bg` | `#2A2522` | page background (warm charcoal-brown) |
+| `card` | `#332D29` | cards, nav hover |
+| `raised` | `#3D3631` | sheets, secondary buttons, poster placeholder |
+| `selected` | `#48403A` | selected segment / tab |
+| `track` | `#524943` | empty stars, switch track off |
+| `line` | `rgba(242,237,230,.06)` | dividers (rare) |
+| `text` | `#F2EDE6` | primary text |
+| `body` | `#DED6CF` | long-form text |
+| `muted` | `#ABA29A` | metadata |
+| `faint` | `#948B83` | decorative numerals, fine print |
+| `accent` | `#8B5CFF` | links, icons, focus |
+| `accent-fill` | `#7444EC` | primary buttons (white text) |
+| `note` | `#C9B5FF` | handwritten notes, eyebrows |
+| `drunk` | `#FF2E88` | Drunk signal |
+| `high` | `#B6FF3B` | High signal |
+| `both` | `#E8A0FF` solid; split dot `linear-gradient(90deg,#FF2E88 50%,#B6FF3B 50%)` | Both signal |
+| `sober` | `#8A94A6` | Sober, low emphasis |
 
-Influence colors are semantic: badges, poster glows, chart bars, and star fills use the session's influence color.
+One accent per screen. Influence colors appear only as small signals: an 8px dot, a rating number, a label. The only gradient allowed in layout is the dark fade at the bottom of a backdrop hero.
 
 ### Typography
 
-- Display: **Unbounded**
-- Body: **Manrope**
-- Numbers / stats: **JetBrains Mono**
-- Sentence case everywhere; no uppercase letter-spaced labels.
+- Display: **Fraunces** with `font-variation-settings: "SOFT" 100, "WONK" 1`, letter-spacing about -0.015em to -0.035em.
+- Body: **Figtree**.
+- Numbers / stats / small eyebrows: **JetBrains Mono**.
+- Personal notes, greetings, friend quotes: **Caveat** (sparingly).
+- Sentence case everywhere.
+
+### Shape, space, imagery
+
+- Radius: poster 6px (8px large), control 12px, card 16px, hero/feature blocks 24-32px, primary buttons pill.
+- Spacing scale 4, 8, 12, 16, 24, 32, 48, 64, 72; 56-72px between sections in the app, 120-180px on the landing page.
+- Posters: TMDB `w342` (lists) / `w500` (detail), fixed 2:3, `object-fit: cover`, no border. Backdrops: `w1280`.
+- Loading: neutral skeleton shimmer in poster shape, image fades in over 200ms. Missing poster: solid `raised` tile with the title in small text.
+- Original line-art illustrations (couch, lamp, glass, smoke curl) as inline SVG for the gate, landing, and empty states.
 
 ### Components
 
-Built on shadcn/ui + Radix primitives, fully restyled:
-`InfluenceChip`, `NeonStars`, `RecommendToggle`, `SessionCard`, `SplitRatingCard`, `PosterTile`, `AvatarStack`, `CheersButton`, `LogSheet`, `CommandPalette`.
-
-- `SessionCard`: horizontal layout, slightly tilted poster, influence-colored edge glow.
-- `PosterTile`: 14px radius, influence rim glow on hover.
+`InfluenceSegment` (Drunk / High two-option segmented control; both selected = Both; small "I was sober" text button), `InfluenceDot`, `Stars` (half-step, influence-colored, no glow), `RecommendSwitch`, `PosterImage`, `SessionRow` (feed item: poster, who and when, title, dot + label + rating, review; cheers button fades in on hover), `SplitRatings` (plain columns separated by 1px dividers), `AvatarStack`, `CheersButton`, `LogSheet`, `CommandPalette`, `HeroBackdrop`, `Marquee`.
 
 ### Motion (`motion` library)
 
-- Background: slow animated smoke haze, low opacity, GPU-composited.
-- Age gate: neon-sign flicker-on.
-- Posters: 3D hover tilt with rim glow.
-- Influence chips: selecting both morphs to the gradient.
-- Session saved: glow burst + 🍻 clink particles.
-- Badges: drunk wobble / high drift on hover.
-- Page transitions: 200ms blur-fade.
-- `prefers-reduced-motion`: haze, flicker, tilt, and wobble disabled.
+- 150-250ms, ease-out `cubic-bezier(.2,.8,.2,1)`, 8-12px slides, scale 0.98 to 1.
+- List items stagger 35ms on load.
+- Poster hover: translateY(-2px) scale(1.02); no glow.
+- Shared-element transition: poster in a list/feed expands into the movie page hero (`layoutId`).
+- Landing: sections reveal on scroll (fade + 12px rise); accent marquee band with wave edges scrolls continuously; poster fan lifts on hover.
+- Log saved: calm check + "cheers to that." note, 200ms pop.
+- `prefers-reduced-motion`: all of the above disabled except opacity fades.
+
+### Voice
+
+- Product name: **Geeked-Drunk**; wordmark lowercase `geeked-drunk` in Fraunces.
+- A log is a **sesh** ("Log a sesh", "Your people's seshes").
+- Copy is explicit about alcohol and weed and friendly about healthy use. Gate and landing carry: "Know your limits, never drive after, look out for each other."
 
 ### Accessibility
 
-- WCAG AA contrast for all text.
-- Glow is decoration only; influence is always also shown by label or icon.
-- Visible focus rings in `accent`.
-- All interactive components keyboard operable (Radix).
+- WCAG AA contrast for text; white on `accent-fill` for buttons.
+- Influence is never conveyed by color alone (always a label).
+- Visible focus rings in `accent`; all interactive components keyboard operable (Radix).
 
 ### Portability
 
@@ -244,11 +264,11 @@ No Letterboxd code, assets, copy, or branding is used.
 - Tailwind CSS v4, shadcn/ui, motion
 - Supabase: Postgres, Auth (email magic link + Google), Storage (avatars), RLS
 - `@supabase/ssr` for server/client auth
-- Hosting: Vercel + Supabase free tier
+- Hosting: Netlify (or Cloudflare) connected to the GitHub repo, auto-deploy on push to `main`; Supabase free tier. Not Vercel (user choice).
 
 ### TMDB layer
 
-- Server-only route handlers proxy TMDB; the API key is never sent to the browser.
+- Server-only route handlers proxy TMDB; the API key is never sent to the browser. The key in use is a TMDB v3 key (`?api_key=`); a read-access JWT (`Authorization: Bearer`) is also accepted, chosen by key length.
 - Movies are upserted into `movies` on first view or log; refreshed when `cached_at` is older than 24h.
 - Footer attribution: "This product uses the TMDB API but is not endorsed or certified by TMDB."
 
