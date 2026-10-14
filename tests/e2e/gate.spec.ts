@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+test.use({ storageState: { cookies: [], origins: [] } })
+
 test('under 21 is turned away', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/gate/)

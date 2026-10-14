@@ -18,7 +18,7 @@ export function NeonStars({
     else return
     e.preventDefault()
   }
-  const pick = (n: number) => onChange?.(n === value ? n - 0.5 : n)
+  const pick = (n: number) => onChange?.(n !== value ? n : n > 0.5 ? n - 0.5 : null)
   return (
     <div
       role="slider"

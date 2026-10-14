@@ -41,4 +41,10 @@ describe('stars clicks', () => {
     fireEvent.click(screen.getByTestId('star-3'))
     expect(fn).toHaveBeenCalledWith(2.5)
   })
+  it('click current 0.5 star -> null, never 0', () => {
+    const fn = vi.fn()
+    render(<NeonStars value={0.5} onChange={fn} influence="high" />)
+    fireEvent.click(screen.getByTestId('star-0.5'))
+    expect(fn).toHaveBeenCalledWith(null)
+  })
 })
