@@ -47,6 +47,6 @@ export async function getMovie(tmdbId: number, fetcher: typeof fetch = fetch): P
   }
 }
 
-export function posterUrl(path: string | null, size: 'w185' | 'w342' | 'w780'): string | null {
+export function posterUrl(path: string | null, size: 'w185' | 'w342' | 'w500' | 'w780' | 'w1280'): string | null {
   return path ? `https://image.tmdb.org/t/p/${size}${path}` : null
 }
