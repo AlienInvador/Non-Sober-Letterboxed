@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, unstable_rethrow } from 'next/navigation'
 import { getMoviePage } from '@/lib/queries/movie'
 import { posterUrl } from '@/lib/tmdb'
-import { influenceLabel } from '@/lib/influence'
+import { influenceLabel, normalizeInfluenceFilter } from '@/lib/influence'
 import { tokens } from '@/design/tokens'
 import { SplitRatingCard } from '@/components/split-rating-card'
 import { AvatarStack } from '@/components/avatar-stack'
@@ -18,12 +18,13 @@ export default async function MoviePage({
 }: { params: Promise<{ tmdbId: string }>; searchParams: Promise<{ influence?: string }> }) {
   const { tmdbId } = await params
   if (!/^\d+$/.test(tmdbId)) notFound()
-  const { influence = 'all' } = await searchParams
+  const influence = normalizeInfluenceFilter((await searchParams).influence)
 
   let data
   try {
     data = await getMoviePage(Number(tmdbId))
-  } catch {
+  } catch (e) {
+    unstable_rethrow(e)
     return (
       <main className="p-10">
         <h1 className="font-display text-3xl">Couldn&apos;t load this movie</h1>

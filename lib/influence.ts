@@ -17,3 +17,6 @@ export const recommendLabel = (i: Influence) => RECOMMEND[i]
 
 const LABEL: Record<Influence, string> = { drunk: 'Drunk', high: 'High', both: 'Both', sober: 'Sober' }
 export const influenceLabel = (i: Influence) => LABEL[i]
+
+const FILTERS = ['all', 'high', 'drunk', 'both']
+export const normalizeInfluenceFilter = (v: string | undefined) => (v && FILTERS.includes(v) ? v : 'all')

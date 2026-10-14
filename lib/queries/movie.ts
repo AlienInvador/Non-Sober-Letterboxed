@@ -16,13 +16,16 @@ export async function getMoviePage(tmdbId: number) {
   const sb = await createServerClient()
   const { data: auth } = await sb.auth.getUser()
   const me = auth.user?.id
+  if (!me) throw new Error('not signed in')
 
   const [statsRes, sessRes, frRes] = await Promise.all([
     sb.from('movie_influence_stats').select('influence, log_count, avg_rating, recommend_pct').eq('tmdb_id', tmdbId),
     sb.from('sessions').select('id, user_id, influence, rating, review, visibility, watched_on')
       .eq('tmdb_id', tmdbId).order('watched_on', { ascending: false }).limit(100),
-    sb.from('friendships').select('user_a, user_b').eq('status', 'accepted'),
+    sb.from('friendships').select('user_a, user_b').eq('status', 'accepted').or(`user_a.eq.${me},user_b.eq.${me}`),
   ])
+
+  for (const r of [statsRes, sessRes, frRes]) if (r.error) throw new Error(r.error.message)
 
   const stats: InfluenceStat[] = (statsRes.data ?? []).map((r) => ({
     influence: r.influence, logCount: Number(r.log_count), avgRating: num(r.avg_rating), recommendPct: num(r.recommend_pct),
