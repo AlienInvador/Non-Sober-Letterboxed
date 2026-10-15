@@ -40,6 +40,7 @@ export async function getFeed(opts: { crewId?: string; before?: string /* encode
     .limit(opts.limit ?? 20)
   q = opts.crewId ? q.eq('crew_id', opts.crewId) : q.or(await peopleFilter(sb, me))
   const cur = opts.before ? decodeCursor(opts.before) : null
+  if (opts.before && !cur) return [] // bad cursor: empty page, never the first page again
   if (cur) q = q.or(`created_at.lt."${cur.createdAt}",and(created_at.eq."${cur.createdAt}",id.lt.${cur.id})`)
   const { data, error } = await q
   if (error) throw new Error(error.message)
