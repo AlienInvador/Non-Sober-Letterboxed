@@ -431,7 +431,7 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 ### Task 12b: Remove stars; recommend becomes the verdict
 
 **Files:**
-- Create: `supabase/migrations/20261014000006_drop_rating.sql`
+- Create: `supabase/migrations/20261014000007_drop_rating.sql`
 - Modify: `lib/session-schema.ts`, `components/log-sheet.tsx`, `components/split-rating-card.tsx` (or wherever SplitRatingCard lives), `app/(app)/movie/[tmdbId]/page.tsx`, `lib/queries/movie.ts`, `actions/sessions.ts`, related tests; delete `components/neon-stars.tsx` and its tests.
 
 **Interfaces:**
@@ -446,7 +446,7 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 ### Task 12c: Social recs (friends-first verdicts + send a rec)
 
 **Files:**
-- Create: `supabase/migrations/20261014000007_recommendations.sql`, `supabase/tests/recs.test.sql`, `actions/recs.ts`, `components/send-rec.tsx`, `components/recs-inbox.tsx`, `lib/queries/recs.ts`
+- Create: `supabase/migrations/20261014000008_recommendations.sql`, `supabase/tests/recs.test.sql`, `actions/recs.ts`, `components/send-rec.tsx`, `components/recs-inbox.tsx`, `lib/queries/recs.ts`
 - Modify: log sheet success state ("Send this rec to…"), movie page (friends-first line + Send a rec button), Tonight ("Recs for you" section above the feed), `lib/queries/movie.ts` (friend verdict counts)
 
 **Interfaces:**
