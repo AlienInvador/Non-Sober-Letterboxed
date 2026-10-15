@@ -1,16 +1,22 @@
-import { LogSheetProvider, LogButton } from '@/components/log-sheet'
+import { LogSheetProvider } from '@/components/log-sheet'
+import { NavRail } from '@/components/nav-rail'
+import { TabBar } from '@/components/tab-bar'
+import { createServerClient } from '@/lib/supabase/server'
 
-// Placeholder nav; Task 12 builds the real one.
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const sb = await createServerClient()
+  const { data: auth } = await sb.auth.getUser()
+  const { data: prof } = auth.user
+    ? await sb.from('profiles').select('username').eq('id', auth.user.id).maybeSingle()
+    : { data: null }
+  const username = prof?.username ?? ''
   return (
     <LogSheetProvider>
       <div className="flex">
-        <nav className="flex w-56 shrink-0 flex-col gap-6 p-6">
-          <span className="font-display text-2xl">geeked-drunk</span>
-          <LogButton />
-        </nav>
-        <div className="min-w-0 flex-1">{children}</div>
+        <NavRail username={username} />
+        <div className="min-w-0 flex-1 pb-20 md:pb-0">{children}</div>
       </div>
+      <TabBar username={username} />
     </LogSheetProvider>
   )
 }

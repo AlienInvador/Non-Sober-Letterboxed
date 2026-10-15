@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
-import { ALICE, BOB, INCEPTION, TEST_PASSWORD } from './helpers'
+import { ALICE, BOB, CAROL, SEED_REVIEW, INCEPTION, TEST_PASSWORD } from './helpers'
 
 type Cookie = { name: string; value: string; domain: string; path: string; httpOnly: boolean; secure: boolean; sameSite: 'Lax'; expires: number }
 
@@ -16,7 +16,7 @@ export default async function globalSetup() {
   }
 
   const ids: Record<string, string> = {}
-  for (const u of [ALICE, BOB]) {
+  for (const u of [ALICE, BOB, CAROL]) {
     const created = await admin.auth.admin.createUser({ email: u.email, password: TEST_PASSWORD, email_confirm: true })
     if (created.data.user) ids[u.email] = created.data.user.id
     else {
@@ -32,9 +32,16 @@ export default async function globalSetup() {
     tmdb_id: INCEPTION.tmdbId, title: INCEPTION.title, year: INCEPTION.year, poster_path: INCEPTION.posterPath,
     backdrop_path: null, genres: ['Action'], runtime: 148, cached_at: new Date().toISOString(),
   }))
+  must(await admin.from('crews').delete().eq('name', 'Couch Crew'))
+  // alice's friends-only sesh for bob to see; recreated so cheers start at 0
+  must(await admin.from('sessions').delete().eq('user_id', ids[ALICE.email]).eq('review', SEED_REVIEW))
+  must(await admin.from('sessions').insert({
+    user_id: ids[ALICE.email], tmdb_id: INCEPTION.tmdbId, influence: 'both', rating: 4.5, recommend: true,
+    review: SEED_REVIEW, visibility: 'friends',
+  }))
 
   mkdirSync('tests/e2e/.auth', { recursive: true })
-  for (const u of [ALICE, BOB]) {
+  for (const u of [ALICE, BOB, CAROL]) {
     const jar = new Map<string, string>()
     const client = createServerClient(url, pub, {
       cookies: {
