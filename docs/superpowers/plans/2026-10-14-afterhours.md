@@ -14,7 +14,7 @@
 
 - Users must be 21+; enforced by a `profiles` BEFORE INSERT/UPDATE trigger, plus `/gate` + `age_ok` cookie in middleware.
 - Influence values exactly: `drunk`, `high`, `both`, `sober`. Sober has no recommend (`recommend` must be null).
-- Rating: null or 0.5–5.0 in 0.5 steps.
+- No star ratings (removed 2026-10-14). recommend is required for drunk/high/both, null for sober. Stats = recommend % + log counts only.
 - Visibility values exactly: `private`, `crew`, `friends` (default), `public`. `crew_id` not null iff visibility is `crew`.
 - Discover minimum log count: `MIN_LOGS = 5`.
 - TMDB key only server-side (`TMDB_API_KEY`, no `NEXT_PUBLIC_` prefix). Movie cache refresh after 24h.
@@ -382,7 +382,7 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 
 **Interfaces:**
 - Consumes: `ensureMovieCached` (Task 7), `formatRecommendPct` (Task 13 — implement it here first if Task 13 not done; it lives in `lib/stats.ts`).
-- Produces: `getMoviePage(tmdbId: number): Promise<{ movie: Movie; stats: InfluenceStat[]; friends: { profile: ProfileLite; influence: Influence }[]; reviews: PublicReview[] }>`; `type InfluenceStat = { influence: Influence; logCount: number; avgRating: number | null; recommendPct: number | null }`; `type ProfileLite = { id: string; username: string; displayName: string | null; avatarUrl: string | null }`.
+- Produces: `getMoviePage(tmdbId: number): Promise<{ movie: Movie; stats: InfluenceStat[]; friends: { profile: ProfileLite; influence: Influence }[]; reviews: PublicReview[] }>`; `type InfluenceStat = { influence: Influence; logCount: number; recommendPct: number | null }` (avgRating removed in Task 12b); `type ProfileLite = { id: string; username: string; displayName: string | null; avatarUrl: string | null }`.
 
 - [ ] **Step 1: Failing test:** SplitRatingCard renders Drunk/High/Both columns always; Sober column only when `logCount > 0`; column with `recommendPct: null` shows "—".
 - [ ] **Step 2:** → FAIL.
@@ -427,6 +427,36 @@ test('failed save keeps inputs', async ({ page }) => { /* force action error; sh
 ---
 
 ## Phase 5 — Discovery and collections
+
+### Task 12b: Remove stars; recommend becomes the verdict
+
+**Files:**
+- Create: `supabase/migrations/20261014000006_drop_rating.sql`
+- Modify: `lib/session-schema.ts`, `components/log-sheet.tsx`, `components/split-rating-card.tsx` (or wherever SplitRatingCard lives), `app/(app)/movie/[tmdbId]/page.tsx`, `lib/queries/movie.ts`, `actions/sessions.ts`, related tests; delete `components/neon-stars.tsx` and its tests.
+
+**Interfaces:**
+- Produces: `SessionInput` without `rating`; `InfluenceStat` without `avgRating`; view `movie_influence_stats(tmdb_id, influence, log_count, recommend_pct)`.
+
+- [ ] **Step 1: Failing tests:** sessionInput rejects drunk/high/both with recommend null; accepts sober with recommend null; has no rating key. pgTAP: inserting a high session with recommend null throws 23514; `sessions.rating` column does not exist; view has no avg_rating.
+- [ ] **Step 2:** → FAIL.
+- [ ] **Step 3:** Migration: drop view, drop `sessions.rating` (dev DB holds only e2e data), add check `(influence = 'sober') = (recommend is null)`, recreate the view without avg_rating (same grants). Remove stars from the log sheet (recommend switch moves up under the influence segment and is required before Save for non-sober), movie page columns (show "% recommend it …" and "<n> logs"), reviews (dot + label + verdict text).
+- [ ] **Step 4:** `npm run test:db`, `npx vitest run`, `npx playwright test`, `npm run build` → PASS.
+- [ ] **Step 5:** Commit `feat: drop star ratings; recommend is the verdict`.
+
+### Task 12c: Social recs (friends-first verdicts + send a rec)
+
+**Files:**
+- Create: `supabase/migrations/20261014000007_recommendations.sql`, `supabase/tests/recs.test.sql`, `actions/recs.ts`, `components/send-rec.tsx`, `components/recs-inbox.tsx`, `lib/queries/recs.ts`
+- Modify: log sheet success state ("Send this rec to…"), movie page (friends-first line + Send a rec button), Tonight ("Recs for you" section above the feed), `lib/queries/movie.ts` (friend verdict counts)
+
+**Interfaces:**
+- Produces: `sendRec({ tmdbId, influence, note?, toUserIds?: string[], crewId?: string, sessionId? }): Promise<{ ok: true; count: number } | { ok: false; error: string }>`, `dismissRec(id)`, `getRecsForMe(limit = 10)`, `getFriendVerdicts(tmdbId): { influence; recommendCount; total }[]`.
+
+- [ ] **Step 1: Failing tests:** pgTAP: alice → bob (friend) rec insert lives; alice → carol (not friend) throws; alice → crew K (member) lives; non-member crew throws; carol cannot select alice→bob rec; bob can set dismissed_at but not change note; sober influence throws. Vitest: getFriendVerdicts aggregation. Playwright: alice logs Paprika high, sends rec to bob; bob's Tonight shows "e2e_alice says watch Paprika high".
+- [ ] **Step 2:** → FAIL.
+- [ ] **Step 3:** Implement per spec "Social recommendations". Friends-first line copy: "<k> of <n> friends recommend it <state>" (hide when n = 0).
+- [ ] **Step 4:** → PASS (all suites + build).
+- [ ] **Step 5:** Commit `feat: send recs to friends and crews, friends-first verdicts`.
 
 ### Task 13: Discover
 

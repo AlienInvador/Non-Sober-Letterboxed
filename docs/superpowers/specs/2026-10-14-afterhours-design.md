@@ -50,10 +50,16 @@ Each session has exactly one `influence` value:
 - `both` (drunk and high)
 - `sober` (optional, low emphasis, no recommend toggle)
 
-### Rating
+### Rating (revised 2026-10-14: no stars)
 
-- Stars: 0.5–5 in half steps, optional.
-- Recommend: boolean "Recommend it [high / drunk / both]?", optional. Not shown for `sober`.
+- There is no star rating. The verdict on a sesh is the recommend answer: "Recommend it [drunk / high / drunk and high]?" yes / no.
+- `recommend` is required when influence is drunk, high, or both; it must be null for `sober` (a sober log is just "watched sober").
+- Movie stats are recommend % per influence plus log counts. No averages.
+
+### Social recommendations (added 2026-10-14)
+
+- Friends first: wherever a movie's verdict appears (movie page, Tonight, Discover rows), the caller's people come first, e.g. "4 of 5 friends recommend it high", followed by the public %.
+- Send a rec: after logging (or from a movie page) a user can send a rec to chosen friends and/or one crew: movie + influence + optional short note. Recipients see it on Tonight under "Recs for you" ("maya says watch Paprika high"), can dismiss it, or tap through to the movie.
 
 ### Visibility
 
@@ -83,8 +89,8 @@ Each session has a `visibility`: `private`, `crew`, `friends` (default), or `pub
 - `tmdb_id int not null` → movies
 - `watched_on date not null default current_date`
 - `influence influence_enum not null` (`drunk | high | both | sober`)
-- `rating numeric(2,1)` — check: null or 0.5–5.0 in 0.5 steps
-- `recommend boolean` — check: null when `influence = 'sober'`
+- (no rating column; removed 2026-10-14)
+- `recommend boolean` — check: null when `influence = 'sober'`, not null otherwise
 - `review text`
 - `visibility visibility_enum not null default 'friends'` (`private | crew | friends | public`)
 - `crew_id uuid` → crews — check: not null iff `visibility = 'crew'`
@@ -117,6 +123,12 @@ Each session has a `visibility`: `private`, `crew`, `friends` (default), or `pub
 **list_items**
 - `list_id uuid`, `tmdb_id int`, `position int`, `added_by uuid`, `note text`; pk (list_id, tmdb_id)
 
+**recommendations** (added 2026-10-14)
+- `id uuid pk`, `from_user uuid not null` → profiles, `to_user uuid` → profiles (nullable), `crew_id uuid` → crews (nullable), check exactly one of `to_user`, `crew_id`
+- `tmdb_id int not null` → movies, `influence influence not null` check `influence <> 'sober'`, `note text` (≤ 140 chars), `session_id uuid` → sessions (nullable, on delete set null)
+- `dismissed_at timestamptz`, `created_at timestamptz default now()`
+- RLS: insert only by from_user = auth.uid(), to_user must be an accepted friend or crew_id a crew the sender belongs to; select by sender, to_user, or crew members; update (dismissed_at only) by to_user; delete by sender.
+
 **queue**
 - `user_id uuid`, `tmdb_id int`, `added_at timestamptz`; pk (user_id, tmdb_id)
 
@@ -124,7 +136,7 @@ Each session has a `visibility`: `private`, `crew`, `friends` (default), or `pub
 
 `movie_influence_stats` (view over **public** sessions only):
 
-- `tmdb_id`, `influence`, `log_count`, `avg_rating`, `recommend_pct`
+- `tmdb_id`, `influence`, `log_count`, `recommend_pct` (no avg_rating)
 - `recommend_pct` = recommend true / (recommend true + recommend false); null when no votes.
 
 Discover ranks by `recommend_pct` with a minimum `log_count` (default 5, configurable constant) to stop single votes topping the charts.
