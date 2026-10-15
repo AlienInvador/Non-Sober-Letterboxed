@@ -7,6 +7,7 @@ import { tokens } from '@/design/tokens'
 import { HowItHits } from '@/components/how-it-hits'
 import { AvatarStack } from '@/components/avatar-stack'
 import { InfluenceDot } from '@/components/influence-chip'
+import { isQueued } from '@/lib/queries/lists'
 import { MovieActions } from '@/components/movie-actions'
 
 const FILTERS = [
@@ -22,8 +23,8 @@ export default async function MoviePage({
 
   let data
   try {
-    const [page, friendVerdicts] = await Promise.all([getMoviePage(Number(tmdbId)), getFriendVerdicts(Number(tmdbId))])
-    data = { ...page, friendVerdicts }
+    const [page, friendVerdicts, queued] = await Promise.all([getMoviePage(Number(tmdbId)), getFriendVerdicts(Number(tmdbId)), isQueued(Number(tmdbId))])
+    data = { ...page, friendVerdicts, queued }
   } catch (e) {
     unstable_rethrow(e)
     return (
@@ -33,7 +34,7 @@ export default async function MoviePage({
       </main>
     )
   }
-  const { movie, stats, friends, reviews, friendVerdicts } = data
+  const { movie, stats, friends, reviews, friendVerdicts, queued } = data
   const poster = posterUrl(movie.posterPath, 'w342')
   const backdrop = posterUrl(movie.backdropPath, 'w1280')
   const meta = [
@@ -71,7 +72,7 @@ export default async function MoviePage({
               ))}
             </ul>
           )}
-          <MovieActions movie={movie} />
+          <MovieActions movie={movie} queued={queued} />
         </div>
       </div>
 

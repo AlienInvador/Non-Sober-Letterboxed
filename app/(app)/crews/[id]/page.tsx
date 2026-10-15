@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getCrewPage } from '@/lib/queries/crews'
+import { getCrewLists } from '@/lib/queries/lists'
+import { NewCrewList } from '@/components/new-list-form'
 import { getFeed } from '@/lib/queries/feed'
 import { posterUrl } from '@/lib/tmdb'
 import { SessionCard } from '@/components/session-card'
@@ -12,7 +14,7 @@ export default async function CrewPage({ params }: { params: Promise<{ id: strin
   const page = await getCrewPage(id)
   if (!page) notFound()
   const { crew, members, topPicks, isOwner, me } = page
-  const feed = await getFeed({ crewId: id })
+  const [feed, lists] = await Promise.all([getFeed({ crewId: id }), getCrewLists(id)])
   return (
     <main className="mx-auto max-w-3xl px-6 py-8 md:px-10">
       <h1 className="font-display text-4xl">{crew.name}</h1>
@@ -61,7 +63,18 @@ export default async function CrewPage({ params }: { params: Promise<{ id: strin
 
       <section className="mt-10">
         <h2 className="font-display text-2xl">Shared lists</h2>
-        <p className="mt-2 text-muted">Shared lists coming soon</p>
+        {lists.length === 0 ? (
+          <p className="mt-2 text-muted">No crew lists yet.</p>
+        ) : (
+          <ul className="mt-2">
+            {lists.map((l) => (
+              <li key={l.id} className="border-b border-line py-3">
+                <Link href={`/lists/${l.id}`}>{l.title}<span className="ml-2 text-sm text-muted">{l.count} {l.count === 1 ? 'movie' : 'movies'}</span></Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <NewCrewList crewId={id} />
       </section>
 
       <section className="mt-10">

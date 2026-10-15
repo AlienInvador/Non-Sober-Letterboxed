@@ -30,7 +30,7 @@ test.describe('bob', () => {
     await page.getByLabel('Add a friend by username').fill('e2e_alice')
     await page.getByRole('button', { name: 'Add' }).click()
     await expect(page.getByRole('link', { name: /e2e_alice/ })).toBeVisible()
-    await expect(page.getByText('Shared lists coming soon')).toBeVisible()
+    await expect(page.getByText('No crew lists yet.')).toBeVisible()
   })
 })
 
