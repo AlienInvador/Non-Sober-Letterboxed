@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useId, useRef, useState, useTransition } from 'react'
 import { useLogSheet } from '@/components/log-sheet'
 import { SendRecButton } from '@/components/send-rec'
 import { NewListForm } from '@/components/new-list-form'
@@ -14,6 +14,8 @@ function AddToList({ movie }: { movie: Movie }) {
   const [lists, setLists] = useState<MyList[] | null>(null)
   const [creating, setCreating] = useState(false)
   const [msg, setMsg] = useState('')
+  const panel = useId()
+  const trigger = useRef<HTMLButtonElement>(null)
 
   async function add(listId: string, title: string) {
     const r = await addToList(listId, movie.tmdbId).catch(() => ({ ok: false, error: 'Something went wrong. Try again.' }))
@@ -25,13 +27,13 @@ function AddToList({ movie }: { movie: Movie }) {
     setMsg('')
   }
   return (
-    <div className="relative">
-      <button type="button" aria-expanded={open} aria-haspopup="menu" onClick={toggle} className={secondary}>Add to list</button>
+    <div className="relative" onKeyDown={(e) => { if (e.key === 'Escape' && open) { setOpen(false); trigger.current?.focus() } }}>
+      <button ref={trigger} type="button" aria-expanded={open} aria-controls={panel} onClick={toggle} className={secondary}>Add to list</button>
       {open && (
-        <div role="menu" aria-label="Add to list" className="absolute left-0 top-full z-30 mt-2 w-72 rounded-[12px] bg-raised p-3 shadow-lg">
+        <div id={panel} className="absolute left-0 top-full z-30 mt-2 w-72 rounded-[12px] bg-raised p-3 shadow-lg">
           {lists === null && <p className="text-sm text-faint">Loading...</p>}
           {lists?.map((l) => (
-            <button key={l.id} type="button" role="menuitem" onClick={() => add(l.id, l.title)} className="block w-full rounded-control px-3 py-2 text-left text-sm hover:bg-card">
+            <button key={l.id} type="button" onClick={() => add(l.id, l.title)} className="block w-full rounded-control px-3 py-2 text-left text-sm hover:bg-card">
               {l.title}{l.crewName && <span className="ml-2 text-xs text-muted">{l.crewName}</span>}
             </button>
           ))}
@@ -40,7 +42,7 @@ function AddToList({ movie }: { movie: Movie }) {
               <NewListForm onCreated={(id) => { setCreating(false); getMyWritableLists().then(setLists); add(id, 'your new list') }} />
             </div>
           ) : (
-            <button type="button" role="menuitem" onClick={() => setCreating(true)} className="mt-1 block w-full rounded-control px-3 py-2 text-left text-sm text-accent hover:bg-card">New list…</button>
+            <button type="button" onClick={() => setCreating(true)} className="mt-1 block w-full rounded-control px-3 py-2 text-left text-sm text-accent hover:bg-card">New list…</button>
           )}
           {msg && <p role="status" className="mt-2 px-3 text-sm text-muted">{msg}</p>}
         </div>

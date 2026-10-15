@@ -22,8 +22,8 @@ export function QueueRow({ movie }: { movie: Movie }) {
       </Link>
       <button type="button" onClick={() => open(movie)} className="rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-white">Log a sesh</button>
       <button
-        type="button" disabled={pending} aria-label={`Remove ${movie.title} from your queue`}
-        onClick={() => start(async () => { const r = await removeFromQueue(movie.tmdbId); setError(r.ok ? '' : r.error ?? 'Failed') })}
+        type="button" aria-label={`Remove ${movie.title} from your queue`}
+        onClick={() => !pending && start(async () => { const r = await removeFromQueue(movie.tmdbId); setError(r.ok ? '' : r.error ?? 'Failed') })}
         className="rounded-full bg-raised px-3 py-2 text-sm text-muted"
       >
         Remove

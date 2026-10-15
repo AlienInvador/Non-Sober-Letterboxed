@@ -65,11 +65,13 @@ export async function addToList(listId: string, tmdbId: number, note?: string): 
   return { ok: true }
 }
 
+const tmdbIdInput = z.number().int().positive()
 export async function removeFromList(listId: string, tmdbId: number): Promise<Result> {
+  if (!uuid.safeParse(listId).success || !tmdbIdInput.safeParse(tmdbId).success) return FAIL
   const { supabase, id } = await me()
   if (!id) return SIGNED_OUT
-  const { error } = await supabase.from('list_items').delete().eq('list_id', listId).eq('tmdb_id', tmdbId)
-  if (error) return FAIL
+  const { data, error } = await supabase.from('list_items').delete().eq('list_id', listId).eq('tmdb_id', tmdbId).select('tmdb_id')
+  if (error || !data?.length) return FAIL
   revalidatePath(`/lists/${listId}`)
   return { ok: true }
 }
@@ -93,6 +95,7 @@ export async function getMyWritableLists(): Promise<MyList[]> {
     supabase.from('lists').select('id, title').eq('owner_id', id).order('title'),
     supabase.from('crew_members').select('crews(name, lists(id, title))').eq('user_id', id),
   ])
+  if (own.error || crews.error) return []
   const fromCrews = (crews.data ?? []).flatMap((m) => {
     const c = m.crews as unknown as { name: string; lists: { id: string; title: string }[] } | null
     return (c?.lists ?? []).map((l) => ({ id: l.id, title: l.title, crewName: c!.name }))

@@ -34,6 +34,7 @@ export async function getList(id: string): Promise<ListPage | null> {
     l.crew_id ? sb.from('crew_members').select('user_id').eq('crew_id', l.crew_id).eq('user_id', me).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ])
   if (items.error) throw new Error(items.error.message)
+  if (mem.error) throw new Error(mem.error.message)
   return {
     id: l.id, title: l.title, description: l.description, visibility: l.visibility,
     owner: (l.profiles as unknown as { username: string } | null) ?? null,
@@ -55,7 +56,8 @@ export async function getQueue(): Promise<Movie[]> {
 
 export async function isQueued(tmdbId: number): Promise<boolean> {
   const { sb, me } = await ctx()
-  const { data } = await sb.from('queue').select('tmdb_id').eq('user_id', me).eq('tmdb_id', tmdbId).maybeSingle()
+  const { data, error } = await sb.from('queue').select('tmdb_id').eq('user_id', me).eq('tmdb_id', tmdbId).maybeSingle()
+  if (error) throw new Error(error.message)
   return !!data
 }
 

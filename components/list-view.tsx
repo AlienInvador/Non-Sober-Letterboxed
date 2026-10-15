@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Reorder } from 'motion/react'
@@ -8,33 +8,58 @@ import { moveItem } from '@/lib/reorder'
 import type { ListPage } from '@/lib/queries/lists'
 
 type Item = ListPage['items'][number]
-const btn = 'rounded-full bg-raised px-3 py-1 text-xs text-muted disabled:opacity-40'
+const btn = 'rounded-full bg-raised px-3 py-1 text-xs text-muted aria-disabled:opacity-40'
 const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 
 export function ListItems({ listId, initial, canWrite }: { listId: string; initial: Item[]; canWrite: boolean }) {
   const [items, setItems] = useState(initial)
   const [error, setError] = useState('')
-  const [pending, start] = useTransition()
+  const [status, setStatus] = useState('')
+  const [focus, setFocus] = useState<{ id: number; dir: 'up' | 'down' } | null>(null)
+  const lastSaved = useRef(initial)
+  const latest = useRef(items)
+  latest.current = items
+  const busy = useRef(false)
+  const ids = (xs: Item[]) => xs.map((i) => i.movie.tmdbId)
 
-  function persist(next: Item[], prev: Item[]) {
+  useEffect(() => {
+    if (focus) document.querySelector<HTMLElement>(`[data-move="${focus.dir}-${focus.id}"]`)?.focus()
+  }, [focus, items])
+
+  async function persist(next: Item[], announce?: string) {
+    if (busy.current) return
+    if (ids(next).join() === ids(lastSaved.current).join()) { setItems(next); return }
+    busy.current = true
     setItems(next)
-    start(async () => {
-      const r = await reorderList(listId, next.map((i) => i.movie.tmdbId)).catch(() => ({ ok: false, error: 'Something went wrong. Try again.' }))
-      if (r.ok) setError('')
-      else { setItems(prev); setError(r.error ?? 'Could not reorder.') }
-    })
+    const r = await reorderList(listId, ids(next)).catch(() => ({ ok: false, error: 'Something went wrong. Try again.' }))
+    busy.current = false
+    if (r.ok) { lastSaved.current = next; setError(''); if (announce) setStatus(announce) }
+    else { setItems(lastSaved.current); setError(r.error ?? 'Could not reorder.') }
   }
-  const move = (from: number, to: number) => persist(moveItem(items, from, to), items)
-  const remove = (tmdbId: number) =>
-    start(async () => {
-      const r = await removeFromList(listId, tmdbId)
-      if (r.ok) setItems((cur) => cur.filter((i) => i.movie.tmdbId !== tmdbId))
-      else setError(r.error ?? 'Could not remove.')
-    })
+  const move = (from: number, to: number, dir: 'up' | 'down') => {
+    if (busy.current || to < 0 || to >= items.length) return
+    const it = items[from]
+    setFocus({ id: it.movie.tmdbId, dir })
+    persist(moveItem(items, from, to), `Moved ${it.movie.title} to position ${to + 1}`)
+  }
+  async function remove(tmdbId: number) {
+    if (busy.current) return
+    busy.current = true
+    const r = await removeFromList(listId, tmdbId).catch(() => ({ ok: false, error: 'Something went wrong. Try again.' }))
+    busy.current = false
+    if (r.ok) {
+      const rest = latest.current.filter((i) => i.movie.tmdbId !== tmdbId)
+      lastSaved.current = lastSaved.current.filter((i) => i.movie.tmdbId !== tmdbId)
+      setItems(rest)
+      setFocus(null)
+      setStatus('Removed from the list')
+    } else setError(r.error ?? 'Could not remove.')
+  }
 
   if (items.length === 0) return <p className="mt-6 text-muted">Nothing on this list yet.{canWrite && ' Add movies from their page.'}</p>
   return (
     <>
+      <p role="status" aria-live="polite" className="sr-only">{status}</p>
       {error && <p role="alert" className="mt-4 text-sm text-drunk">{error}</p>}
       <Reorder.Group axis="y" values={items} onReorder={setItems} as="ol" className="mt-6 divide-y divide-line">
         {items.map((it, idx) => {
@@ -43,7 +68,7 @@ export function ListItems({ listId, initial, canWrite }: { listId: string; initi
           return (
             <Reorder.Item
               key={m.tmdbId} value={it} as="li" drag={canWrite ? 'y' : false}
-              onDragEnd={() => canWrite && persist(items, initial)}
+              onDragEnd={() => canWrite && persist(latest.current)}
               className="flex items-center gap-4 bg-bg py-4"
             >
               {canWrite && <span aria-hidden className="cursor-grab select-none text-faint">⋮⋮</span>}
@@ -58,9 +83,9 @@ export function ListItems({ listId, initial, canWrite }: { listId: string; initi
               </div>
               {canWrite && (
                 <div className="flex gap-2">
-                  <button type="button" disabled={pending || idx === 0} aria-label={`Move ${m.title} up`} onClick={() => move(idx, idx - 1)} className={btn}>Up</button>
-                  <button type="button" disabled={pending || idx === items.length - 1} aria-label={`Move ${m.title} down`} onClick={() => move(idx, idx + 1)} className={btn}>Down</button>
-                  <button type="button" disabled={pending} aria-label={`Remove ${m.title}`} onClick={() => remove(m.tmdbId)} className={btn}>Remove</button>
+                  <button type="button" data-move={`up-${m.tmdbId}`} aria-disabled={idx === 0} aria-label={`Move ${m.title} up`} onClick={() => move(idx, idx - 1, 'up')} className={btn}>Up</button>
+                  <button type="button" data-move={`down-${m.tmdbId}`} aria-disabled={idx === items.length - 1} aria-label={`Move ${m.title} down`} onClick={() => move(idx, idx + 1, 'down')} className={btn}>Down</button>
+                  <button type="button" aria-label={`Remove ${m.title}`} onClick={() => remove(m.tmdbId)} className={btn}>Remove</button>
                 </div>
               )}
             </Reorder.Item>
