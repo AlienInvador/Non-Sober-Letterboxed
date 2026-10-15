@@ -36,7 +36,7 @@ export default async function globalSetup() {
   // alice's friends-only sesh for bob to see; recreated so cheers start at 0
   must(await admin.from('sessions').delete().eq('user_id', ids[ALICE.email]).eq('review', SEED_REVIEW))
   must(await admin.from('sessions').insert({
-    user_id: ids[ALICE.email], tmdb_id: INCEPTION.tmdbId, influence: 'both', rating: 4.5, recommend: true,
+    user_id: ids[ALICE.email], tmdb_id: INCEPTION.tmdbId, influence: 'both', recommend: true,
     review: SEED_REVIEW, visibility: 'friends',
   }))
 

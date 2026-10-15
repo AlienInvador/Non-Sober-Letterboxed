@@ -13,7 +13,7 @@ export async function toggleCheers(sessionId: string): Promise<{ cheered: boolea
   const { error } = existing
     ? await sb.from('cheers').delete().eq('session_id', sessionId).eq('user_id', me)
     : await sb.from('cheers').insert({ session_id: sessionId, user_id: me })
-  if (error) throw new Error(error.message)
+  if (error && error.code !== '23505') throw new Error(error.message) // 23505: already cheered
   const { count, error: e2 } = await sb.from('cheers').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
   if (e2) throw new Error(e2.message)
   revalidatePath('/')

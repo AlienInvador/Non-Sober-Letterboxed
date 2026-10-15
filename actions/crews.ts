@@ -19,12 +19,10 @@ export async function createCrew(name: string): Promise<Result> {
   if (!clean || clean.length > 40) return { ok: false, error: 'Name your crew (up to 40 characters).' }
   const { supabase, id } = await me()
   if (!id) return SIGNED_OUT
-  const { data, error } = await supabase.from('crews').insert({ name: clean, created_by: id }).select('id').single()
-  if (error) return FAIL
-  const { error: e2 } = await supabase.from('crew_members').insert({ crew_id: data.id, user_id: id, role: 'owner' })
-  if (e2) return FAIL
+  const { data, error } = await supabase.rpc('create_crew', { p_name: clean })
+  if (error || !data) return FAIL
   revalidatePath('/crews')
-  return { ok: true, id: data.id }
+  return { ok: true, id: data as string }
 }
 
 export async function addCrewMember(crewId: string, userId: string): Promise<Result> {

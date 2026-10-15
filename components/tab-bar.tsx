@@ -23,7 +23,8 @@ export function TabBar({ username }: { username: string }) {
       {tab(tonight)}
       {tab(discover)}
       <button type="button" onClick={() => open()} className="mx-1 -mt-4 rounded-full bg-accent-fill px-4 py-3 text-xs font-semibold text-white">
-        Log
+        <span aria-hidden>Log</span>
+        <span className="sr-only">Log a sesh</span>
       </button>
       {tab(crews)}
       {tab(me)}
