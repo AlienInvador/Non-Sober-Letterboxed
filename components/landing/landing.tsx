@@ -56,7 +56,7 @@ export function Landing({ picks }: { picks: Pick[] }) {
         </p>
         <div className="mt-2.5 flex flex-wrap justify-center gap-3">
           <Link href="/auth/login" className={`${BTN} bg-accent-fill text-white`}>Pull up a cushion</Link>
-          <Link href="/discover" className={`${BTN} bg-raised text-text`}>See tonight’s picks</Link>
+          <a href="#how" className={`${BTN} bg-raised text-text`}>See how it works</a>
         </div>
       </section>
 

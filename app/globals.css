@@ -73,4 +73,7 @@ body {
 
 @keyframes slide { to { transform: translateX(-50%); } }
 .marquee-track { display: flex; width: max-content; animation: slide 40s linear infinite; }
-@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; width: auto; }
+  .marquee-dup { display: none; }
+}

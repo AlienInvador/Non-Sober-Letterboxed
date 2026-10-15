@@ -27,7 +27,7 @@ export function SessionCard({ item, index = 0 }: { item: FeedItem; index?: numbe
       </Link>
       <div className="min-w-0 flex-1">
         <p className="text-sm text-muted">
-          <Link href={`/u/${item.profile.username}`} className="text-text">{item.profile.username}</Link>
+          <Link href={`/u/${item.profile.username}`} className="text-text underline underline-offset-2">{item.profile.username}</Link>
           {' · '}
           <span className="font-mono text-xs">{relativeTime(item.createdAt)}</span>
         </p>

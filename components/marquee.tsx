@@ -2,10 +2,10 @@ export type Tick = { title: string; stat: string }
 
 function Row({ items, hidden }: { items: Tick[]; hidden?: boolean }) {
   return (
-    <div className="flex" aria-hidden={hidden || undefined}>
+    <div className={`marquee-row flex flex-wrap gap-y-2${hidden ? " marquee-dup" : ""}`} aria-hidden={hidden || undefined}>
       {items.map((t) => (
         <span key={t.title} className="inline-flex items-center gap-[18px] whitespace-nowrap pr-9 font-display text-[30px] font-medium italic text-white">
-          {t.title} <span className="font-mono text-base not-italic opacity-80">{t.stat}</span>
+          {t.title} <span className="font-mono text-base not-italic">{t.stat}</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" aria-hidden="true">
             <path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" />
           </svg>

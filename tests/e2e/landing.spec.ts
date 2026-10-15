@@ -33,4 +33,5 @@ test('signed in / still shows Tonight', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Movies hit different drunk or high.' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Get in' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Tonight' })).toBeAttached()
 })
