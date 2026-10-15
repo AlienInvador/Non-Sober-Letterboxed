@@ -4,10 +4,10 @@ import { ensureMovieCached } from '@/lib/movies'
 import type { Movie } from '@/lib/tmdb'
 import type { Influence } from '@/lib/influence'
 
-export type InfluenceStat = { influence: Influence; logCount: number; avgRating: number | null; recommendPct: number | null }
+export type InfluenceStat = { influence: Influence; logCount: number; recommendPct: number | null }
 export type ProfileLite = { id: string; username: string; displayName: string | null; avatarUrl: string | null }
-export type PublicReview = { id: string; profile: ProfileLite; influence: Influence; rating: number | null; review: string; watchedOn: string }
-export type FriendWatch = { profile: ProfileLite; influence: Influence; rating: number | null }
+export type PublicReview = { id: string; profile: ProfileLite; influence: Influence; recommend: boolean | null; review: string; watchedOn: string }
+export type FriendWatch = { profile: ProfileLite; influence: Influence; recommend: boolean | null }
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v))
 
@@ -19,8 +19,8 @@ export async function getMoviePage(tmdbId: number) {
   if (!me) throw new Error('not signed in')
 
   const [statsRes, sessRes, frRes] = await Promise.all([
-    sb.from('movie_influence_stats').select('influence, log_count, avg_rating, recommend_pct').eq('tmdb_id', tmdbId),
-    sb.from('sessions').select('id, user_id, influence, rating, review, visibility, watched_on')
+    sb.from('movie_influence_stats').select('influence, log_count, recommend_pct').eq('tmdb_id', tmdbId),
+    sb.from('sessions').select('id, user_id, influence, recommend, review, visibility, watched_on')
       .eq('tmdb_id', tmdbId).order('watched_on', { ascending: false }).limit(100),
     sb.from('friendships').select('user_a, user_b').eq('status', 'accepted').or(`user_a.eq.${me},user_b.eq.${me}`),
   ])
@@ -28,7 +28,7 @@ export async function getMoviePage(tmdbId: number) {
   for (const r of [statsRes, sessRes, frRes]) if (r.error) throw new Error(r.error.message)
 
   const stats: InfluenceStat[] = (statsRes.data ?? []).map((r) => ({
-    influence: r.influence, logCount: Number(r.log_count), avgRating: num(r.avg_rating), recommendPct: num(r.recommend_pct),
+    influence: r.influence, logCount: Number(r.log_count), recommendPct: num(r.recommend_pct),
   }))
 
   const friendIds = new Set((frRes.data ?? []).flatMap((f) => [f.user_a, f.user_b]).filter((id) => id !== me))
@@ -49,10 +49,10 @@ export async function getMoviePage(tmdbId: number) {
     if (!profile) continue
     if (friendIds.has(s.user_id) && !seen.has(s.user_id)) {
       seen.add(s.user_id)
-      friends.push({ profile, influence: s.influence, rating: num(s.rating) })
+      friends.push({ profile, influence: s.influence, recommend: s.recommend })
     }
     if (s.visibility === 'public' && s.review?.trim()) {
-      reviews.push({ id: s.id, profile, influence: s.influence, rating: num(s.rating), review: s.review, watchedOn: s.watched_on })
+      reviews.push({ id: s.id, profile, influence: s.influence, recommend: s.recommend, review: s.review, watchedOn: s.watched_on })
     }
   }
   return { movie, stats, friends, reviews }

@@ -9,9 +9,7 @@ const COLS: { influence: Influence; label: string; verb: string }[] = [
   { influence: 'both', label: 'Drunk + high', verb: 'both' },
 ]
 
-const avg = (n: number | null | undefined) => (n == null ? '—' : String(Number(n.toFixed(1))))
-
-export function SplitRatingCard({ stats }: { stats: InfluenceStat[] }) {
+export function HowItHits({ stats }: { stats: InfluenceStat[] }) {
   const get = (i: Influence) => stats.find((s) => s.influence === i)
   const sober = get('sober')
   return (
@@ -28,7 +26,7 @@ export function SplitRatingCard({ stats }: { stats: InfluenceStat[] }) {
               <div className="mt-2 font-mono text-5xl text-text">{formatRecommendPct(s?.recommendPct ?? null)}</div>
               <div className="mt-1 text-sm text-body">recommend it {c.verb}</div>
               <div className="mt-1 text-xs text-faint">
-                {avg(s?.avgRating)} avg · {s?.logCount ?? 0} logs
+                {s?.logCount ?? 0} logs
               </div>
             </div>
           )
@@ -36,7 +34,7 @@ export function SplitRatingCard({ stats }: { stats: InfluenceStat[] }) {
       </div>
       {sober && sober.logCount > 0 && (
         <p className="mt-3 text-xs text-muted">
-          Sober: {avg(sober.avgRating)} avg · {sober.logCount} logs
+          Sober: {sober.logCount} logs
         </p>
       )}
     </div>

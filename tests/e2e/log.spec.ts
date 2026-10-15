@@ -9,8 +9,7 @@ async function pickInception(page: Page) {
   await page.getByRole('option', { name: /Inception/ }).click()
   await page.getByRole('button', { name: 'Drunk' }).click()
   await page.getByRole('button', { name: 'High' }).click() // -> Both
-  await page.getByRole('slider', { name: 'Rating' }).press('ArrowRight')
-  await page.getByRole('switch', { name: 'Recommend it drunk and high?' }).click()
+  await page.getByRole('button', { name: 'Yes, recommend it drunk and high' }).click()
 }
 
 test('log a session in four steps', async ({ page }) => {
@@ -27,6 +26,6 @@ test('failed save keeps inputs', async ({ page }) => {
   )
   await page.getByRole('button', { name: /Save/ }).click()
   await expect(page.getByRole('alert')).toBeVisible()
-  await expect(page.getByRole('slider', { name: 'Rating' })).toHaveAttribute('aria-valuenow', '0.5')
+  await expect(page.getByRole('button', { name: 'Yes, recommend it drunk and high' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: /Save/ })).toBeVisible()
 })

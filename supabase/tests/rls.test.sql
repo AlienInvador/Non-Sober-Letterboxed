@@ -28,12 +28,12 @@ insert into friendships(user_a, user_b, status, requested_by) values (least(alic
 insert into crews(id, name, created_by) values (crew_k(), 'K', alice());
 insert into crew_members(crew_id, user_id, role) values (crew_k(), alice(), 'owner'), (crew_k(), dave(), 'member');
 insert into lists(id, crew_id, title, visibility) values (list_k(), crew_k(), 'K picks', 'crew');
-insert into sessions(id, user_id, tmdb_id, influence, visibility, crew_id) values
-  (s_private(), alice(), 1, 'high', 'private', null),
-  (s_friends(), alice(), 1, 'drunk', 'friends', null),
-  (s_crew(),    alice(), 1, 'both', 'crew', crew_k()),
-  (s_public(),  alice(), 1, 'sober', 'public', null),
-  (s_dave_crew(), dave(), 2, 'high', 'crew', crew_k());
+insert into sessions(id, user_id, tmdb_id, influence, visibility, crew_id, recommend) values
+  (s_private(), alice(), 1, 'high', 'private', null, true),
+  (s_friends(), alice(), 1, 'drunk', 'friends', null, true),
+  (s_crew(),    alice(), 1, 'both', 'crew', crew_k(), true),
+  (s_public(),  alice(), 1, 'sober', 'public', null, null),
+  (s_dave_crew(), dave(), 2, 'high', 'crew', crew_k(), true);
 
 select plan(40);
 
@@ -45,7 +45,7 @@ select has_function('private', 'are_friends', array['uuid', 'uuid'], 'helpers li
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-000000000b0b","role":"authenticated"}';
 select is((select count(*) from sessions where user_id = alice()), 2::bigint, 'friend sees friends + public');
-select throws_ok($$ insert into sessions(user_id, tmdb_id, influence) values (alice(), 1, 'high') $$, '42501', null, 'bob cannot insert a session as alice');
+select throws_ok($$ insert into sessions(user_id, tmdb_id, influence, recommend) values (alice(), 1, 'high', true) $$, '42501', null, 'bob cannot insert a session as alice');
 select lives_ok($$ insert into cheers(session_id, user_id) values (s_friends(), bob()) $$, 'friend can cheer friends-only session');
 select throws_ok($$ select birthdate from profiles $$, '42501', null, 'birthdate is not readable');
 select lives_ok($$ select username, display_name, avatar_url from profiles $$, 'public profile columns readable');
@@ -55,7 +55,7 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000ca01","role":"authenticated"}';
 select is((select count(*) from sessions where user_id = alice()), 1::bigint, 'stranger sees public only');
-select throws_ok($$ insert into sessions(user_id, tmdb_id, influence, visibility, crew_id) values (carol(), 1, 'high', 'crew', crew_k()) $$, '42501', null, 'non-member cannot post to crew');
+select throws_ok($$ insert into sessions(user_id, tmdb_id, influence, visibility, crew_id, recommend) values (carol(), 1, 'high', 'crew', crew_k(), true) $$, '42501', null, 'non-member cannot post to crew');
 select throws_ok($$ insert into list_items(list_id, tmdb_id, added_by) values (list_k(), 2, carol()) $$, '42501', null, 'non-member cannot add to crew list');
 select throws_ok($$ insert into cheers(session_id, user_id) values (s_friends(), carol()) $$, '42501', null, 'stranger cannot cheer friends-only session');
 with u as (update sessions set review = 'pwned' where id = s_public() returning 1)

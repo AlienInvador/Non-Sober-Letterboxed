@@ -25,7 +25,7 @@ export async function createSession(input: SessionInput): Promise<Result<{ id: s
     .from('sessions')
     .insert({
       user_id: auth.user.id, tmdb_id: s.tmdbId, watched_on: s.watchedOn, influence: s.influence,
-      rating: s.rating, recommend: s.recommend, review: s.review?.trim() || null,
+      recommend: s.recommend, review: s.review?.trim() || null,
       visibility: s.visibility, crew_id: s.crewId, rewatch: s.rewatch,
     })
     .select('id')

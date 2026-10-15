@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { notFound, unstable_rethrow } from 'next/navigation'
 import { getMoviePage } from '@/lib/queries/movie'
 import { posterUrl } from '@/lib/tmdb'
-import { influenceLabel, normalizeInfluenceFilter } from '@/lib/influence'
+import { influenceLabel, normalizeInfluenceFilter, verdict } from '@/lib/influence'
 import { tokens } from '@/design/tokens'
-import { SplitRatingCard } from '@/components/split-rating-card'
+import { HowItHits } from '@/components/how-it-hits'
 import { AvatarStack } from '@/components/avatar-stack'
 import { InfluenceDot } from '@/components/influence-chip'
 import { MovieActions } from '@/components/movie-actions'
@@ -67,7 +67,7 @@ export default async function MoviePage({
       <div className="mt-14 space-y-14 px-6 sm:px-10">
         <section aria-labelledby="hits">
           <h2 id="hits" className="mb-4 font-display text-2xl">How it hits</h2>
-          <SplitRatingCard stats={stats} />
+          <HowItHits stats={stats} />
         </section>
 
         {friends.length > 0 && (
@@ -103,9 +103,7 @@ export default async function MoviePage({
                       <InfluenceDot influence={r.influence} />
                       {influenceLabel(r.influence)}
                     </span>
-                    {r.rating !== null && (
-                      <span className="font-mono" style={{ color: tokens.color[r.influence] }}>{r.rating}</span>
-                    )}
+                    <span className="text-muted">{verdict(r.recommend)}</span>
                   </div>
                   <p className="mt-2 leading-[1.7] text-body">{r.review}</p>
                 </li>

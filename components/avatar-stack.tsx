@@ -1,11 +1,11 @@
 import { InfluenceDot } from '@/components/influence-chip'
-import { influenceLabel } from '@/lib/influence'
+import { influenceLabel, verdict } from '@/lib/influence'
 import type { FriendWatch } from '@/lib/queries/movie'
 
 export function AvatarStack({ friends }: { friends: FriendWatch[] }) {
   return (
     <ul className="flex flex-wrap gap-x-8 gap-y-4">
-      {friends.map(({ profile, influence, rating }) => (
+      {friends.map(({ profile, influence, recommend }) => (
         <li key={profile.id} className="flex items-center gap-3">
           {profile.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -20,7 +20,7 @@ export function AvatarStack({ friends }: { friends: FriendWatch[] }) {
             <span className="flex items-center gap-1.5 text-xs text-muted">
               <InfluenceDot influence={influence} />
               {influenceLabel(influence)}
-              {rating !== null && <span className="font-mono">· {rating}</span>}
+              <span>· {verdict(recommend)}</span>
             </span>
           </span>
         </li>

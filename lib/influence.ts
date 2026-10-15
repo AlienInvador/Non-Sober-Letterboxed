@@ -15,6 +15,8 @@ const RECOMMEND: Record<Influence, string | null> = {
 }
 export const recommendLabel = (i: Influence) => RECOMMEND[i]
 
+export const verdict = (r: boolean | null) => (r === null ? '' : r ? 'recommends it' : 'would skip it')
+
 const LABEL: Record<Influence, string> = { drunk: 'Drunk', high: 'High', both: 'Both', sober: 'Sober' }
 export const influenceLabel = (i: Influence) => LABEL[i]
 

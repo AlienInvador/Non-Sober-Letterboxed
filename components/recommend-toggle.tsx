@@ -6,20 +6,25 @@ export function RecommendToggle({
 }: { influence: Influence; value: boolean | null; onChange: (v: boolean) => void }) {
   const label = recommendLabel(influence)
   if (!label) return null
-  const on = value === true
+  const state = label.slice('Recommend it '.length, -1) // drunk | high | drunk and high
+  const pill = (v: boolean, text: string) => (
+    <button
+      type="button"
+      aria-pressed={value === v}
+      aria-label={`${text} ${state}`}
+      onClick={() => onChange(v)}
+      className={`flex-1 rounded-control px-3 py-2 text-sm ${value === v ? 'bg-selected text-text' : 'text-muted'}`}
+    >
+      {text}
+    </button>
+  )
   return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-label={label}
-        onClick={() => onChange(!on)}
-        className={`relative h-7 w-12 rounded-full transition-colors duration-150 ${on ? 'bg-accent-fill' : 'bg-track'}`}
-      >
-        <span className={`absolute top-1 left-1 size-5 rounded-full bg-text transition-transform duration-150 ${on ? 'translate-x-5' : ''}`} />
-      </button>
-      <span className="text-sm text-body">{label}</span>
+    <div role="group" aria-label={label} className="flex flex-col gap-2">
+      <span className="text-sm text-muted">{label}</span>
+      <div className="flex gap-1 rounded-control bg-card p-1">
+        {pill(true, 'Yes, recommend it')}
+        {pill(false, 'Nah, skip it')}
+      </div>
     </div>
   )
 }

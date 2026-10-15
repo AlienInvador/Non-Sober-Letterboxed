@@ -6,7 +6,6 @@ import { Check } from 'lucide-react'
 import type { MovieSummary } from '@/lib/tmdb'
 import { influenceFromChips } from '@/lib/influence'
 import { InfluenceChip } from '@/components/influence-chip'
-import { NeonStars } from '@/components/neon-stars'
 import { RecommendToggle } from '@/components/recommend-toggle'
 import { createSession, getLogContext, type LogContext } from '@/actions/sessions'
 
@@ -73,7 +72,6 @@ const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: () => void }) {
   const [movie, setMovie] = useState<MovieSummary | null>(initial)
   const [chips, setChips] = useState({ drunk: false, high: false, sober: false })
-  const [rating, setRating] = useState<number | null>(null)
   const [recommend, setRecommend] = useState<boolean | null>(null)
   const [more, setMore] = useState(false)
   const [ctx, setCtx] = useState<LogContext | null>(null)
@@ -88,7 +86,7 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
 
   const influence = influenceFromChips(chips)
   const crewMissing = visibility === 'crew' && !crewId
-  const canSave = !!movie && !!influence && !crewMissing && !saving
+  const canSave = !!movie && !!influence && (influence === 'sober' || recommend !== null) && !crewMissing && !saving
 
   useEffect(() => {
     if (more && !ctx) getLogContext().then(setCtx).catch(() => setCtx({ friends: [], crews: [] }))
@@ -102,7 +100,7 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
     setError('')
     try {
       const res = await createSession({
-        tmdbId: movie.tmdbId, influence, rating,
+        tmdbId: movie.tmdbId, influence,
         recommend: influence === 'sober' ? null : recommend,
         review: review.trim() || null, visibility,
         crewId: visibility === 'crew' ? crewId : null,
@@ -152,11 +150,6 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
           I was sober
         </button>
       </section>
-
-      <div className="flex items-center gap-4">
-        <NeonStars value={rating} onChange={setRating} influence={influence ?? 'sober'} />
-        <span className="font-mono text-sm text-body">{rating ?? '-'}</span>
-      </div>
 
       {influence && <RecommendToggle influence={influence} value={recommend} onChange={setRecommend} />}
 
