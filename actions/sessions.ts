@@ -53,7 +53,7 @@ export async function deleteSession(id: string): Promise<Result> {
   return { ok: true }
 }
 
-export type LogContext = { friends: { id: string; name: string }[]; crews: { id: string; name: string }[] }
+export type LogContext = { friends: { id: string; name: string; username: string; avatarUrl: string | null }[]; crews: { id: string; name: string }[] }
 
 // Accepted friends + the user's crews, for the sheet's "More" section.
 export async function getLogContext(): Promise<LogContext> {
@@ -65,11 +65,11 @@ export async function getLogContext(): Promise<LogContext> {
     .from('friendships').select('user_a, user_b').eq('status', 'accepted').or(`user_a.eq.${me},user_b.eq.${me}`)
   const ids = (fr ?? []).map((f) => (f.user_a === me ? f.user_b : f.user_a))
   const { data: profs } = ids.length
-    ? await supabase.from('profiles').select('id, username, display_name').in('id', ids)
+    ? await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', ids)
     : { data: [] }
   const { data: cm } = await supabase.from('crew_members').select('crews(id, name)').eq('user_id', me)
   return {
-    friends: (profs ?? []).map((p) => ({ id: p.id, name: p.display_name || p.username })),
+    friends: (profs ?? []).map((p) => ({ id: p.id, name: p.display_name || p.username, username: p.username, avatarUrl: p.avatar_url })),
     crews: (cm ?? []).flatMap((c) => (c.crews ? [c.crews as unknown as { id: string; name: string }] : [])),
   }
 }

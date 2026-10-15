@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { notFound, unstable_rethrow } from 'next/navigation'
-import { getMoviePage } from '@/lib/queries/movie'
+import { getFriendVerdicts, getMoviePage } from '@/lib/queries/movie'
 import { posterUrl } from '@/lib/tmdb'
-import { influenceLabel, normalizeInfluenceFilter, verdict } from '@/lib/influence'
+import { influenceLabel, normalizeInfluenceFilter, stateWord, verdict } from '@/lib/influence'
 import { tokens } from '@/design/tokens'
 import { HowItHits } from '@/components/how-it-hits'
 import { AvatarStack } from '@/components/avatar-stack'
@@ -22,7 +22,8 @@ export default async function MoviePage({
 
   let data
   try {
-    data = await getMoviePage(Number(tmdbId))
+    const [page, friendVerdicts] = await Promise.all([getMoviePage(Number(tmdbId)), getFriendVerdicts(Number(tmdbId))])
+    data = { ...page, friendVerdicts }
   } catch (e) {
     unstable_rethrow(e)
     return (
@@ -32,7 +33,7 @@ export default async function MoviePage({
       </main>
     )
   }
-  const { movie, stats, friends, reviews } = data
+  const { movie, stats, friends, reviews, friendVerdicts } = data
   const poster = posterUrl(movie.posterPath, 'w342')
   const backdrop = posterUrl(movie.backdropPath, 'w1280')
   const meta = [
@@ -60,6 +61,16 @@ export default async function MoviePage({
         <div className="min-w-0 flex-1 basis-72">
           <h1 className="font-display text-[clamp(38px,6vw,60px)] leading-none tracking-[-0.03em]">{movie.title}</h1>
           <p className="mt-3 text-muted">{meta}</p>
+          {friendVerdicts.length > 0 && (
+            <ul aria-label="Your friends' verdicts" className="mt-3 space-y-1 text-sm text-body">
+              {friendVerdicts.map((v) => (
+                <li key={v.influence} className="flex items-center gap-2">
+                  <InfluenceDot influence={v.influence} />
+                  {v.recommendCount} of {v.total} {v.total === 1 ? 'friend recommends' : 'friends recommend'} it {stateWord(v.influence)}
+                </li>
+              ))}
+            </ul>
+          )}
           <MovieActions movie={movie} />
         </div>
       </div>

@@ -8,6 +8,7 @@ import { influenceFromChips } from '@/lib/influence'
 import { InfluenceChip } from '@/components/influence-chip'
 import { RecommendToggle } from '@/components/recommend-toggle'
 import { createSession, getLogContext, type LogContext } from '@/actions/sessions'
+import { SendRecForm } from '@/components/send-rec'
 
 type Ctx = { open(movie?: MovieSummary): void }
 const LogSheetCtx = createContext<Ctx>({ open: () => {} })
@@ -49,10 +50,11 @@ export function LogSheetProvider({ children }: { children: React.ReactNode }) {
             <Dialog.Title className="sr-only">Log a sesh</Dialog.Title>
             <LogForm
               initial={initial}
-              onSaved={() => {
+              onSaved={(autoClose) => {
                 setToast(true)
-                setTimeout(() => setOpen(false), 1400)
+                if (autoClose) setTimeout(() => setOpen(false), 1400)
               }}
+              onClose={() => setOpen(false)}
             />
           </Dialog.Content>
         </Dialog.Portal>
@@ -69,7 +71,7 @@ export function LogSheetProvider({ children }: { children: React.ReactNode }) {
 const NOTE = { drunk: 'a few drinks in', high: 'nicely high', both: 'drunk and high, a whole night', sober: 'sober, for science' }
 const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 
-function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: () => void }) {
+function LogForm({ initial, onSaved, onClose }: { initial: MovieSummary | null; onSaved: (autoClose: boolean) => void; onClose: () => void }) {
   const [movie, setMovie] = useState<MovieSummary | null>(initial)
   const [chips, setChips] = useState({ drunk: false, high: false, sober: false })
   const [recommend, setRecommend] = useState<boolean | null>(null)
@@ -83,6 +85,8 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+  const [sessionId, setSessionId] = useState('')
+  const [recOpen, setRecOpen] = useState(false)
 
   const influence = influenceFromChips(chips)
   const crewMissing = visibility === 'crew' && !crewId
@@ -109,7 +113,9 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
       })
       if (res.ok) {
         setDone(true)
-        onSaved()
+        setSessionId(res.id)
+        // a recommended sesh stays open so the "Send this rec" offer can be used
+        onSaved(!(influence !== 'sober' && recommend === true))
       } else setError(res.error)
     } catch {
       setError('Could not reach the server. Your picks are still here, try again.')
@@ -118,6 +124,9 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
   }
 
   if (!movie) return <MoviePicker onPick={setMovie} />
+  if (recOpen && influence && influence !== 'sober') {
+    return <SendRecForm movie={movie} influence={influence} sessionId={sessionId} onDone={onClose} />
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -206,6 +215,11 @@ function LogForm({ initial, onSaved }: { initial: MovieSummary | null; onSaved: 
           <Check aria-hidden className="size-8 text-high" />
           <p className="font-semibold">Logged.</p>
           <p className="font-note text-xl text-note">cheers to that.</p>
+          {influence !== 'sober' && recommend === true && (
+            <button type="button" onClick={() => setRecOpen(true)} className="mt-2 text-sm font-semibold text-accent underline">
+              Send this rec to…
+            </button>
+          )}
         </motion.div>
       ) : (
         <button type="button" disabled={!canSave} onClick={save} className="rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-40">

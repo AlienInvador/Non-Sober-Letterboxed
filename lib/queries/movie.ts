@@ -57,3 +57,39 @@ export async function getMoviePage(tmdbId: number) {
   }
   return { movie, stats, friends, reviews }
 }
+
+export type FriendVerdict = { influence: Exclude<Influence, 'sober'>; recommendCount: number; total: number }
+type VerdictRow = { user_id: string; influence: Influence; recommend: boolean | null }
+const VERDICT_ORDER = ['drunk', 'high', 'both'] as const
+
+// rows newest first; each friend counts once per state, by their latest sesh in that state.
+export function friendVerdicts(rows: VerdictRow[]): FriendVerdict[] {
+  const seen = new Set<string>()
+  const acc = new Map<Influence, FriendVerdict>()
+  for (const r of rows) {
+    if (r.influence === 'sober' || seen.has(`${r.influence}:${r.user_id}`)) continue
+    seen.add(`${r.influence}:${r.user_id}`)
+    const v = acc.get(r.influence) ?? { influence: r.influence, recommendCount: 0, total: 0 }
+    v.total++
+    if (r.recommend) v.recommendCount++
+    acc.set(r.influence, v)
+  }
+  return VERDICT_ORDER.flatMap((i) => acc.get(i) ?? [])
+}
+
+export async function getFriendVerdicts(tmdbId: number): Promise<FriendVerdict[]> {
+  const sb = await createServerClient()
+  const { data: auth } = await sb.auth.getUser()
+  const me = auth.user?.id
+  if (!me) throw new Error('not signed in')
+  const fr = await sb.from('friendships').select('user_a, user_b').eq('status', 'accepted').or(`user_a.eq.${me},user_b.eq.${me}`)
+  if (fr.error) throw new Error(fr.error.message)
+  const ids = (fr.data ?? []).map((f) => (f.user_a === me ? f.user_b : f.user_a))
+  if (!ids.length) return []
+  // RLS limits this to seshes the caller can read
+  const { data, error } = await sb.from('sessions').select('user_id, influence, recommend')
+    .eq('tmdb_id', tmdbId).in('user_id', ids).neq('influence', 'sober')
+    .order('created_at', { ascending: false }).limit(500)
+  if (error) throw new Error(error.message)
+  return friendVerdicts(data ?? [])
+}

@@ -20,5 +20,8 @@ export const verdict = (r: boolean | null) => (r === null ? '' : r ? 'recommends
 const LABEL: Record<Influence, string> = { drunk: 'Drunk', high: 'High', both: 'Both', sober: 'Sober' }
 export const influenceLabel = (i: Influence) => LABEL[i]
 
+// "recommend it <state>" / "says watch X <state>"
+export const stateWord = (i: Influence) => (i === 'both' ? 'drunk and high' : i)
+
 const FILTERS = ['all', 'high', 'drunk', 'both']
 export const normalizeInfluenceFilter = (v: string | undefined) => (v && FILTERS.includes(v) ? v : 'all')
