@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC = ['/gate', '/auth']
+const PUBLIC = ['/gate', '/auth', '/welcome']
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -35,6 +35,12 @@ export async function updateSession(request: NextRequest) {
   if (!request.cookies.get('age_ok') && pathname !== '/gate') return go('/gate')
   // /api/tmdb stays behind age_ok but skips the login redirect
   if (pathname.startsWith('/api/tmdb') || PUBLIC.some((p) => pathname.startsWith(p))) return response
+  if (!user && pathname === '/') {
+    // signed-out home is the landing page; URL stays /
+    const res = NextResponse.rewrite(new URL('/welcome', request.url))
+    response.cookies.getAll().forEach((c) => res.cookies.set(c))
+    return res
+  }
   if (!user) return go('/auth/login')
   if (pathname !== '/onboarding') {
     const { data, error } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()

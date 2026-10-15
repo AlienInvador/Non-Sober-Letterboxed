@@ -70,3 +70,7 @@ body {
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 .rise { animation: rise 240ms var(--ease-out-soft) both; animation-delay: calc(var(--i, 0) * 35ms); }
+
+@keyframes slide { to { transform: translateX(-50%); } }
+.marquee-track { display: flex; width: max-content; animation: slide 40s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
