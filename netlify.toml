@@ -1,3 +1,8 @@
 [build]
   command = "npm run build"
   publish = ".next"
+
+# NEXT_PUBLIC_* values are inlined into the client bundle by design (the Supabase
+# publishable key is public; RLS protects data). Secret keys stay scanned.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_SUPABASE_URL"
