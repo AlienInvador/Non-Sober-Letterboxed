@@ -14,3 +14,12 @@ create policy session_companions_update on public.session_companions for update 
     and (own_session_id is null
       or exists (select 1 from public.sessions s where s.id = own_session_id and s.user_id = (select auth.uid())))
   );
+
+-- An owner tags a friend as pending only; approval is the friend's update, never the owner's insert.
+drop policy session_companions_insert on public.session_companions;
+create policy session_companions_insert on public.session_companions for insert to authenticated
+  with check (
+    exists (select 1 from public.sessions s where s.id = session_id and s.user_id = (select auth.uid()))
+    and private.are_friends((select auth.uid()), user_id)
+    and status = 'pending' and own_session_id is null
+  );
