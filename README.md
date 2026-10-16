@@ -7,7 +7,15 @@ Social movie log for adults 21+. Next.js 15 (App Router) and Supabase.
 The cloud Supabase project is production. It was wiped clean on 2026-10-16 and holds only real users.
 
 - `npm run test:db` is safe to run against it: every test file runs in `begin … rollback`, so nothing persists.
-- Playwright and `npm run seed:demo` create users with a committed test password, so they refuse to run against a non-local Supabase URL. Run them against a local Supabase (Docker, `npx supabase start`) by pointing `.env.local` at it. `ALLOW_TEST_DATA=1` overrides the guard; never use it against production.
+- Playwright and `npm run seed:demo` create users with a committed test password, so they refuse to run against a non-local Supabase URL. `ALLOW_TEST_DATA=1` overrides the guard; never use it against production.
+
+### Local Supabase for e2e and demo data
+
+1. Start Docker Desktop, then run `npx supabase start`. It applies every migration in `supabase/migrations`.
+2. Create `.env.e2e.local` (gitignored) from `npx supabase status -o env`:
+   `NEXT_PUBLIC_SUPABASE_URL` = `API_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` = `SECRET_KEY`, `SUPABASE_DB_URL` = `DB_URL`.
+3. `npx playwright test` and `npm run seed:demo` load `.env.e2e.local` first, so it wins over `.env.local`. Playwright runs its own dev server on port 3100, so a dev server on 3000 that points at production is never reused.
+4. `npx supabase stop` when done.
 
 ## Demo data
 

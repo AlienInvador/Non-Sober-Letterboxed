@@ -3,6 +3,7 @@
 import { randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
+try { process.loadEnvFile('.env.e2e.local') } catch {} // local Docker Supabase wins over .env.local
 try { process.loadEnvFile('.env.local') } catch {}
 // The cloud project is production now; demo users must never be seeded there.
 if (!/^https?:\/\/(127\.0\.0\.1|localhost)[:/]/.test(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '') && process.env.ALLOW_TEST_DATA !== '1') {

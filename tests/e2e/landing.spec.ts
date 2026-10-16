@@ -8,7 +8,7 @@ test.describe('signed out', () => {
 
   test('landing renders at / with no nav rail', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveURL(/localhost:3000\/$/)
+    await expect(page).toHaveURL(/localhost:3100\/$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Movies hit different drunk or high.' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Get in' }).first()).toHaveAttribute('href', '/auth/login')
     await expect(page.getByText('This product uses the TMDB API but is not endorsed or certified by TMDB.')).toBeVisible()
