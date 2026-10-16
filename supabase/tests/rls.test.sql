@@ -35,7 +35,7 @@ insert into sessions(id, user_id, tmdb_id, influence, visibility, crew_id, recom
   (s_public(),  alice(), 1, 'sober', 'public', null, null),
   (s_dave_crew(), dave(), 2, 'high', 'crew', crew_k(), true);
 
-select plan(40);
+select plan(42);
 
 select is((select count(*) from pg_class where relnamespace = 'public'::regnamespace and relkind = 'r' and not relrowsecurity), 0::bigint, 'RLS enabled on every public table');
 select is((select count(*) from pg_proc where pronamespace = 'public'::regnamespace and proname in ('are_friends', 'is_crew_member', 'is_crew_owner', 'crew_has_members', 'can_read_session')), 0::bigint, 'helpers no longer in public (not RPC-callable)');
@@ -110,6 +110,13 @@ reset role;
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 select is((select count(*) from sessions), 0::bigint, 'anon sees no sessions');
+reset role;
+
+-- alice (owner) adds crew members: friends only
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a11c","role":"authenticated"}';
+select throws_ok($$ insert into crew_members(crew_id, user_id) values (crew_k(), carol()) $$, '42501', null, 'owner cannot add a non-friend to the crew');
+select lives_ok($$ insert into crew_members(crew_id, user_id) values (crew_k(), bob()) $$, 'owner can add a friend to the crew');
 reset role;
 
 -- alice deletes crew K under RLS; crew sessions fall back to private

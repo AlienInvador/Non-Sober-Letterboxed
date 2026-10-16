@@ -49,3 +49,16 @@ test('posterUrl', () => {
   expect(posterUrl('/p.jpg', 'w185')).toBe('https://image.tmdb.org/t/p/w185/p.jpg')
   expect(posterUrl(null, 'w185')).toBeNull()
 })
+test('malformed json and missing results throw TmdbError', async () => {
+  await expect(searchMovies('x', vi.fn().mockResolvedValue(new Response('<html>')))).rejects.toBeInstanceOf(TmdbError)
+  await expect(searchMovies('x', vi.fn().mockResolvedValue(ok({})))).rejects.toBeInstanceOf(TmdbError)
+})
+test('request failure does not leak the url in the message', async () => {
+  const err = await searchMovies('x', vi.fn().mockRejectedValue(new Error('https://x?api_key=SECRET'))).catch((e) => e)
+  expect(err.message).not.toContain('SECRET')
+  expect(err.cause).toBeInstanceOf(Error)
+})
+test('404 carries status', async () => {
+  const err = await getMovie(1, vi.fn().mockResolvedValue(new Response('no', { status: 404 }))).catch((e) => e)
+  expect(err.status).toBe(404)
+})

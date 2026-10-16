@@ -32,7 +32,7 @@ export default async function globalSetup() {
     tmdb_id: INCEPTION.tmdbId, title: INCEPTION.title, year: INCEPTION.year, poster_path: INCEPTION.posterPath,
     backdrop_path: null, genres: ['Action'], runtime: 148, cached_at: new Date().toISOString(),
   }))
-  must(await admin.from('crews').delete().eq('name', 'Couch Crew'))
+  must(await admin.from('crews').delete().eq('name', 'Couch Crew').in('created_by', [ids[ALICE.email], ids[BOB.email], ids[CAROL.email]]))
   // alice's friends-only sesh for bob to see; recreated so cheers start at 0
   must(await admin.from('sessions').delete().eq('user_id', ids[ALICE.email]).eq('review', SEED_REVIEW))
   must(await admin.from('sessions').insert({

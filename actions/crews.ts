@@ -1,7 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createServerClient } from '@/lib/supabase/server'
-import { orderedPair } from '@/lib/friends'
+import { orderedPair, escapeLike } from '@/lib/friends'
 
 type Result = { ok: boolean; error?: string; id?: string }
 const FAIL: Result = { ok: false, error: 'Something went wrong. Try again.' }
@@ -25,7 +25,7 @@ export async function createCrew(name: string): Promise<Result> {
   return { ok: true, id: data as string }
 }
 
-export async function addCrewMember(crewId: string, userId: string): Promise<Result> {
+async function addCrewMember(crewId: string, userId: string): Promise<Result> {
   const { supabase, id } = await me()
   if (!id) return SIGNED_OUT
   const { error } = await supabase.from('crew_members').insert({ crew_id: crewId, user_id: userId, role: 'member' })
@@ -37,7 +37,7 @@ export async function addCrewMember(crewId: string, userId: string): Promise<Res
 export async function addCrewMemberByUsername(crewId: string, username: string): Promise<Result> {
   const { supabase, id } = await me()
   if (!id) return SIGNED_OUT
-  const { data: p } = await supabase.from('profiles').select('id').eq('username', username.trim().replace(/^@/, '')).maybeSingle()
+  const { data: p } = await supabase.from('profiles').select('id').ilike('username', escapeLike(username.trim().replace(/^@/, ''))).maybeSingle()
   if (!p) return { ok: false, error: 'No one with that username.' }
   const [user_a, user_b] = orderedPair(id, p.id)
   const { data: f } = await supabase.from('friendships').select('status').eq('user_a', user_a).eq('user_b', user_b).eq('status', 'accepted').maybeSingle()

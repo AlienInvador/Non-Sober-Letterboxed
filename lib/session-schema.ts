@@ -5,10 +5,10 @@ export const sessionInput = z
     tmdbId: z.number().int().positive(),
     influence: z.enum(['drunk', 'high', 'both', 'sober']),
     recommend: z.boolean().nullable().default(null),
-    review: z.string().nullable().default(null),
+    review: z.string().max(2000, 'Keep the review under 2000 characters.').nullable().default(null),
     visibility: z.enum(['private', 'crew', 'friends', 'public']).default('friends'),
-    crewId: z.string().nullable().default(null),
-    companionIds: z.array(z.string()).default([]),
+    crewId: z.uuid().nullable().default(null),
+    companionIds: z.array(z.uuid()).max(20).default([]),
     rewatch: z.boolean().default(false),
     watchedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   })

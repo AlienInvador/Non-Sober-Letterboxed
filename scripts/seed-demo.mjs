@@ -49,12 +49,12 @@ for (const n of NAMES) {
 }
 
 // wipe prior demo rows (sessions cascade cheers/companions; crews cascade members and crew lists)
-const inIds = `(${ids.join(',')})`
 must(await admin.from('sessions').delete().in('user_id', ids))
 must(await admin.from('crews').delete().in('created_by', ids))
 must(await admin.from('lists').delete().in('owner_id', ids))
 must(await admin.from('queue').delete().in('user_id', ids))
-must(await admin.from('friendships').delete().or(`user_a.in.${inIds},user_b.in.${inIds}`))
+// both sides must be demo ids: never touch a demo<->real friendship
+must(await admin.from('friendships').delete().in('user_a', ids).in('user_b', ids))
 
 // movies
 const movies = []

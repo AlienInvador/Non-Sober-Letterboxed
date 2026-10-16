@@ -3,7 +3,13 @@ import 'server-only'
 export type MovieSummary = { tmdbId: number; title: string; year: number | null; posterPath: string | null }
 export type Movie = MovieSummary & { backdropPath: string | null; genres: string[]; runtime: number | null }
 
-export class TmdbError extends Error {}
+export class TmdbError extends Error {
+  status?: number
+  constructor(message: string, opts?: { cause?: unknown; status?: number }) {
+    super(message, opts?.cause === undefined ? undefined : { cause: opts.cause })
+    this.status = opts?.status
+  }
+}
 
 type Raw = { id: number; title: string; release_date?: string | null; poster_path?: string | null }
 
@@ -18,10 +24,14 @@ async function tmdb(path: string, params: Record<string, string>, fetcher: typeo
   try {
     res = await fetcher(url.toString(), { headers })
   } catch (e) {
-    throw new TmdbError(`TMDB request failed: ${e}`)
+    throw new TmdbError('TMDB request failed', { cause: e })
   }
-  if (!res.ok) throw new TmdbError(`TMDB ${res.status}`)
-  return res.json()
+  if (!res.ok) throw new TmdbError(`TMDB ${res.status}`, { status: res.status })
+  try {
+    return await res.json()
+  } catch (e) {
+    throw new TmdbError('TMDB bad json', { cause: e })
+  }
 }
 
 const summary = (r: Raw): MovieSummary => ({
@@ -34,6 +44,7 @@ const summary = (r: Raw): MovieSummary => ({
 export async function searchMovies(q: string, fetcher: typeof fetch = fetch): Promise<MovieSummary[]> {
   if (!q.trim()) return []
   const data = await tmdb('/search/movie', { query: q.trim() }, fetcher)
+  if (!Array.isArray(data.results)) throw new TmdbError('TMDB bad shape')
   return (data.results as Raw[]).map(summary)
 }
 
