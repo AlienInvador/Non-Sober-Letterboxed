@@ -2,18 +2,16 @@
 
 Social movie log for adults 21+. Next.js 15 (App Router) and Supabase.
 
-## Demo data
-
-`npm run seed:demo` loads 6 demo users, crews, ~60 sessions over 20 movies (idempotent; touches only `demo-*` users and friendships between demo users).
-
 ## Environments
 
-Use two Supabase projects:
+The cloud Supabase project is production. It was wiped clean on 2026-10-16 and holds only real users.
 
-- **Dev/test**: seeded with demo data and used by `npm run test:db` and Playwright (the e2e users have a committed test password).
-- **Production**: a SEPARATE project. Run `npx supabase db push` against it, and never seed it or run e2e or `test:db` against it.
+- `npm run test:db` is safe to run against it: every test file runs in `begin … rollback`, so nothing persists.
+- Playwright and `npm run seed:demo` create users with a committed test password, so they refuse to run against a non-local Supabase URL. Run them against a local Supabase (Docker, `npx supabase start`) by pointing `.env.local` at it. `ALLOW_TEST_DATA=1` overrides the guard; never use it against production.
 
-Playwright's global setup and teardown create and delete data owned by the `e2e-*` users, so they must never see production.
+## Demo data
+
+`npm run seed:demo` (local only) loads 6 demo users, crews, ~60 sessions over 20 movies (idempotent; touches only `demo-*` users and friendships between demo users).
 
 ## Deploy (Netlify)
 

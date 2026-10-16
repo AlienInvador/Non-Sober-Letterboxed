@@ -7,6 +7,10 @@ type Cookie = { name: string; value: string; domain: string; path: string; httpO
 
 export default async function globalSetup() {
   process.loadEnvFile('.env.local')
+  // The cloud project is production now; test users must never be created there.
+  const target = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  if (!/^https?:\/\/(127\.0\.0\.1|localhost)[:/]/.test(target) && process.env.ALLOW_TEST_DATA !== '1')
+    throw new Error('e2e refuses to run against a non-local Supabase project (set ALLOW_TEST_DATA=1 to override)')
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const pub = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   const admin = createClient(url, process.env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false } })

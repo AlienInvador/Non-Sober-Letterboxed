@@ -4,6 +4,11 @@ import { randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
 try { process.loadEnvFile('.env.local') } catch {}
+// The cloud project is production now; demo users must never be seeded there.
+if (!/^https?:\/\/(127\.0\.0\.1|localhost)[:/]/.test(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '') && process.env.ALLOW_TEST_DATA !== '1') {
+  console.error('seed:demo refuses to run against a non-local Supabase project (set ALLOW_TEST_DATA=1 to override)')
+  process.exit(1)
+}
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
 const must = (r) => {
   if (r.error) throw new Error(`seed: ${r.error.message}`)
