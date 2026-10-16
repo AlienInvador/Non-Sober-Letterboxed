@@ -19,15 +19,6 @@ export default function Login() {
       setError(e instanceof Error ? e.message : 'Could not send the link. Try again.')
     }
   }
-  async function google() {
-    setError('')
-    try {
-      const { error } = await createBrowserClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectTo() } })
-      if (error) setError(error.message)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.')
-    }
-  }
 
   return (
     <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center gap-5 px-6 py-12">
@@ -44,7 +35,6 @@ export default function Login() {
           <button type="submit" className="rounded-full bg-accent-fill px-6 py-3 font-semibold text-white">Send magic link</button>
         </form>
       )}
-      <button onClick={google} className="rounded-full bg-raised px-6 py-3 font-semibold text-text">Continue with Google</button>
       {error && <p role="alert" className="text-drunk">{error}</p>}
     </main>
   )
