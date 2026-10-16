@@ -9,6 +9,7 @@ export const sessionInput = z
     visibility: z.enum(['private', 'crew', 'friends', 'public']).default('friends'),
     crewId: z.uuid().nullable().default(null),
     companionIds: z.array(z.uuid()).max(20).default([]),
+    fromTagSessionId: z.uuid().optional(),
     rewatch: z.boolean().default(false),
     watchedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   })

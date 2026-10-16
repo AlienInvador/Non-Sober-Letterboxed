@@ -10,7 +10,8 @@ import { RecommendToggle } from '@/components/recommend-toggle'
 import { createSession, getLogContext, type LogContext } from '@/actions/sessions'
 import { SendRecForm } from '@/components/send-rec'
 
-type Ctx = { open(movie?: MovieSummary): void }
+export type LogPreset = { watchedOn?: string; companionIds?: string[]; fromTagSessionId?: string }
+type Ctx = { open(movie?: MovieSummary, preset?: LogPreset): void }
 const LogSheetCtx = createContext<Ctx>({ open: () => {} })
 export const useLogSheet = () => useContext(LogSheetCtx)
 
@@ -26,9 +27,11 @@ export function LogButton() {
 export function LogSheetProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setOpen] = useState(false)
   const [initial, setInitial] = useState<MovieSummary | null>(null)
+  const [preset, setPreset] = useState<LogPreset>({})
   const [toast, setToast] = useState(false)
-  const open = useCallback((movie?: MovieSummary) => {
+  const open = useCallback((movie?: MovieSummary, p?: LogPreset) => {
     setInitial(movie ?? null)
+    setPreset(p ?? {})
     setOpen(true)
   }, [])
   useEffect(() => {
@@ -50,6 +53,7 @@ export function LogSheetProvider({ children }: { children: React.ReactNode }) {
             <Dialog.Title className="sr-only">Log a sesh</Dialog.Title>
             <LogForm
               initial={initial}
+              preset={preset}
               onSaved={(autoClose) => {
                 setToast(true)
                 if (autoClose) setTimeout(() => setOpen(false), 1400)
@@ -71,13 +75,13 @@ export function LogSheetProvider({ children }: { children: React.ReactNode }) {
 const NOTE = { drunk: 'a few drinks in', high: 'nicely high', both: 'drunk and high, a whole night', sober: 'sober, for science' }
 const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 
-function LogForm({ initial, onSaved, onClose }: { initial: MovieSummary | null; onSaved: (autoClose: boolean) => void; onClose: () => void }) {
+function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary | null; preset: LogPreset; onSaved: (autoClose: boolean) => void; onClose: () => void }) {
   const [movie, setMovie] = useState<MovieSummary | null>(initial)
   const [chips, setChips] = useState({ drunk: false, high: false, sober: false })
   const [recommend, setRecommend] = useState<boolean | null>(null)
   const [more, setMore] = useState(false)
   const [ctx, setCtx] = useState<LogContext | null>(null)
-  const [companions, setCompanions] = useState<string[]>([])
+  const [companions, setCompanions] = useState<string[]>(preset.companionIds ?? [])
   const [visibility, setVisibility] = useState<'private' | 'crew' | 'friends' | 'public'>('friends')
   const [crewId, setCrewId] = useState('')
   const [review, setReview] = useState('')
@@ -108,8 +112,8 @@ function LogForm({ initial, onSaved, onClose }: { initial: MovieSummary | null; 
         recommend: influence === 'sober' ? null : recommend,
         review: review.trim() || null, visibility,
         crewId: visibility === 'crew' ? crewId : null,
-        companionIds: companions, rewatch,
-        watchedOn: new Date().toLocaleDateString('en-CA'),
+        companionIds: companions, rewatch, fromTagSessionId: preset.fromTagSessionId,
+        watchedOn: preset.watchedOn ?? new Date().toLocaleDateString('en-CA'),
       })
       if (res.ok) {
         setDone(true)

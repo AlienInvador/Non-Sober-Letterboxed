@@ -42,6 +42,11 @@ export async function createSession(input: SessionInput): Promise<Result<{ id: s
       return FAIL
     }
   }
+  if (s.fromTagSessionId) {
+    // best effort: the sesh is saved either way; a stale tag just stays pending
+    await supabase.from('session_companions').update({ status: 'accepted', own_session_id: data.id })
+      .eq('user_id', auth.user.id).eq('session_id', s.fromTagSessionId)
+  }
   revalidatePath('/')
   return { ok: true, id: data.id }
 }

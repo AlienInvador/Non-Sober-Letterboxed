@@ -2,7 +2,7 @@ import 'server-only'
 import { createServerClient } from '@/lib/supabase/server'
 import { orderedPair, escapeLike } from '@/lib/friends'
 import type { Influence } from '@/lib/influence'
-import type { FeedItem } from '@/lib/queries/feed'
+import { acceptedNames, COMPANIONS, type FeedItem } from '@/lib/queries/feed'
 import { influenceBreakdown, monthLabel } from '@/lib/profile-stats'
 
 export { influenceBreakdown }
@@ -32,7 +32,7 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
   const [sessRes, listRes, frRes] = await Promise.all([
     // RLS decides which of their seshes I can read
     sb.from('sessions')
-      .select('id, influence, recommend, review, watched_on, created_at, movies(tmdb_id, title, year, poster_path), cheers(user_id)')
+      .select(`id, influence, recommend, review, watched_on, created_at, movies(tmdb_id, title, year, poster_path), cheers(user_id), ${COMPANIONS}`)
       .eq('user_id', p.id).order('watched_on', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     sb.from('lists').select('id, title, list_items(count)').eq('owner_id', p.id).order('title'),
     sb.from('friendships').select('status, requested_by').eq('user_a', a).eq('user_b', b).maybeSingle(),
@@ -48,6 +48,7 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
       id: r.id, profile, movie: { tmdbId: m.tmdb_id, title: m.title, year: m.year, posterPath: m.poster_path },
       influence: r.influence as Influence, recommend: r.recommend, review: r.review, watchedOn: r.watched_on,
       createdAt: r.created_at as string, cursor: '', cheers: cheers.length, cheeredByMe: cheers.some((c) => c.user_id === me),
+      withNames: acceptedNames(r.session_companions),
     }]
   })
   const months: ProfileData['months'] = []

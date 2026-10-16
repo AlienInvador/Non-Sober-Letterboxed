@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { unstable_rethrow } from 'next/navigation'
 import { getFeed, getHero, getHittingTonight, getQueue } from '@/lib/queries/feed'
 import { getRecsForMe } from '@/lib/queries/recs'
+import { getTagsForMe } from '@/lib/queries/tags'
 import { createServerClient } from '@/lib/supabase/server'
 import { posterUrl } from '@/lib/tmdb'
 import { formatRecommendPct } from '@/lib/stats'
@@ -13,16 +14,17 @@ import { InviteLink } from '@/components/invite-link'
 import { HeroActions } from '@/components/hero-actions'
 import { InfluenceDot } from '@/components/influence-chip'
 import { RecsInbox } from '@/components/recs-inbox'
+import { TagsInbox } from '@/components/tags-inbox'
 
 export default async function Tonight() {
   let data
   try {
     const hitting = await getHittingTonight()
-    const [feed, queue, hero, recs] = await Promise.all([getFeed(), getQueue(), getHero(hitting), getRecsForMe()])
+    const [feed, queue, hero, recs, tags] = await Promise.all([getFeed(), getQueue(), getHero(hitting), getRecsForMe(), getTagsForMe()])
     const sb = await createServerClient()
     const { data: auth } = await sb.auth.getUser()
     const { data: prof } = await sb.from('profiles').select('username').eq('id', auth.user!.id).single()
-    data = { feed, queue, hero, recs, username: prof?.username ?? '', me: auth.user!.id }
+    data = { feed, queue, hero, recs, tags, username: prof?.username ?? '', me: auth.user!.id }
   } catch (e) {
     unstable_rethrow(e)
     return (
@@ -32,7 +34,7 @@ export default async function Tonight() {
       </main>
     )
   }
-  const { feed, queue, hero, recs, username, me } = data
+  const { feed, queue, hero, recs, tags, username, me } = data
   const backdrop = hero && posterUrl(hero.backdropPath, 'w1280')
 
   return (
@@ -85,6 +87,13 @@ export default async function Tonight() {
               )
             })}
           </ul>
+        </section>
+      )}
+
+      {tags.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl">Tagged with you</h2>
+          <TagsInbox tags={tags} />
         </section>
       )}
 

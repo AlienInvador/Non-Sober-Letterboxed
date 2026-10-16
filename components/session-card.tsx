@@ -33,6 +33,7 @@ export function SessionCard({ item, index = 0, isMine = false }: { item: FeedIte
           <span className="font-mono text-xs">{relativeTime(item.createdAt)}</span>
         </p>
         <h3 className="font-display mt-1 text-2xl">{item.movie.title}</h3>
+        {item.withNames.length > 0 && <p className="text-sm text-muted">with {item.withNames.join(', ')}</p>}
         <p className="mt-2 flex items-center gap-2 text-sm" style={{ color }}>
           <InfluenceDot influence={item.influence} />
           {influenceLabel(item.influence)}

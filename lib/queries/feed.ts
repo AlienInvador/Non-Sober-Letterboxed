@@ -7,13 +7,19 @@ import type { ProfileLite } from '@/lib/queries/movie'
 
 export type FeedItem = {
   id: string; profile: ProfileLite; movie: MovieSummary; influence: Influence; recommend: boolean | null
-  review: string | null; watchedOn: string; cheers: number; cheeredByMe: boolean; createdAt: string; cursor: string
+  review: string | null; watchedOn: string; cheers: number; cheeredByMe: boolean; createdAt: string; cursor: string; withNames: string[]
 }
 
 type MovieRow = { tmdb_id: number; title: string; year: number | null; poster_path: string | null }
 type ProfRow = { id: string; username: string; display_name: string | null; avatar_url: string | null }
 const MOVIE = 'tmdb_id, title, year, poster_path'
 const movieOf = (m: MovieRow): MovieSummary => ({ tmdbId: m.tmdb_id, title: m.title, year: m.year, posterPath: m.poster_path })
+
+export const COMPANIONS = 'session_companions!session_companions_session_id_fkey(status, profiles(username, display_name))'
+// Only approved tags show on a card; pending and declined render nothing.
+export const acceptedNames = (rows: unknown): string[] =>
+  ((rows ?? []) as { status: string; profiles: { username: string; display_name: string | null } | null }[])
+    .flatMap((c) => (c.status === 'accepted' && c.profiles ? [c.profiles.display_name || c.profiles.username] : []))
 
 async function ctx() {
   const sb = await createServerClient()
@@ -34,7 +40,7 @@ export async function getFeed(opts: { crewId?: string; before?: string /* encode
   const { sb, me } = await ctx()
   let q = sb
     .from('sessions')
-    .select(`id, influence, recommend, review, watched_on, created_at, profiles!sessions_user_id_fkey(id, username, display_name, avatar_url), movies(${MOVIE}), cheers(user_id)`)
+    .select(`id, influence, recommend, review, watched_on, created_at, profiles!sessions_user_id_fkey(id, username, display_name, avatar_url), movies(${MOVIE}), cheers(user_id), ${COMPANIONS}`)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(opts.limit ?? 20)
@@ -53,6 +59,7 @@ export async function getFeed(opts: { crewId?: string; before?: string /* encode
       id: r.id, profile: { id: p.id, username: p.username, displayName: p.display_name, avatarUrl: p.avatar_url },
       movie: movieOf(m), influence: r.influence as Influence,
       recommend: r.recommend, review: r.review, watchedOn: r.watched_on, createdAt: r.created_at as string, cursor: encodeCursor({ createdAt: r.created_at as string, id: r.id }),
+      withNames: acceptedNames(r.session_companions),
       cheers: cheers.length, cheeredByMe: cheers.some((c) => c.user_id === me),
     }]
   })
