@@ -1,5 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import { createServerClient } from '@/lib/supabase/server'
 import { ensureMovieCached } from '@/lib/movies'
 import { sessionInput, type SessionInput } from '@/lib/session-schema'
@@ -45,11 +46,21 @@ export async function createSession(input: SessionInput): Promise<Result<{ id: s
   return { ok: true, id: data.id }
 }
 
+const sessionId = z.uuid()
+
 export async function deleteSession(id: string): Promise<Result> {
+  if (!sessionId.safeParse(id).success) return { ok: false, error: 'Could not delete that sesh.' }
   const supabase = await createServerClient()
-  const { error } = await supabase.from('sessions').delete().eq('id', id)
-  if (error) return { ok: false, error: 'Could not delete that sesh.' }
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) return { ok: false, error: 'You are signed out. Sign in again.' }
+  // RLS only lets the owner delete; an empty result means not found or not yours
+  const { data, error } = await supabase.from('sessions').delete().eq('id', id).select('id')
+  if (error || !data?.length) return { ok: false, error: 'Could not delete that sesh.' }
   revalidatePath('/')
+  revalidatePath('/discover')
+  revalidatePath('/u/[username]', 'page')
+  revalidatePath('/crews/[id]', 'page')
+  revalidatePath('/movie/[tmdbId]', 'page')
   return { ok: true }
 }
 

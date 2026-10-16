@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getProfile } from '@/lib/queries/profile'
+import { createServerClient } from '@/lib/supabase/server'
+import { signOut } from '@/actions/auth'
 import { influenceLabel, type Influence } from '@/lib/influence'
 import { tokens } from '@/design/tokens'
 import { SessionCard } from '@/components/session-card'
@@ -13,10 +15,20 @@ export default async function ProfilePage({ params, searchParams }: {
   params: Promise<{ username: string }>; searchParams: Promise<{ add?: string }>
 }) {
   const [{ username }, { add }] = await Promise.all([params, searchParams])
-  const data = await getProfile(decodeURIComponent(username))
+  if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) notFound()
+  const data = await getProfile(username)
   if (!data) notFound()
   const { profile, status, total, breakdown, months, lists } = data
   const shown = ORDER.filter((k) => breakdown[k] > 0)
+  const isSelf = status === 'self'
+  let requests = 0
+  if (isSelf) {
+    // RLS limits friendships to mine, so this counts requests addressed to me
+    const sb = await createServerClient()
+    const { count } = await sb.from('friendships').select('user_a', { count: 'exact', head: true })
+      .eq('status', 'pending').neq('requested_by', profile.id)
+    requests = count ?? 0
+  }
 
   return (
     <main className="max-w-3xl p-10">
@@ -30,6 +42,18 @@ export default async function ProfilePage({ params, searchParams }: {
         </div>
         <FriendAction userId={profile.id} status={status} highlight={add === '1'} />
       </header>
+
+      {isSelf && (
+        <nav aria-label="Your stuff" className="mt-5 flex flex-wrap items-center gap-3 text-sm">
+          <Link href="/friends" className="rounded-full bg-raised px-4 py-1.5">
+            Friends{requests > 0 && <span className="ml-2 font-mono text-accent">{requests} {requests === 1 ? 'request' : 'requests'}</span>}
+          </Link>
+          <Link href="/queue" className="rounded-full bg-raised px-4 py-1.5">Queue</Link>
+          <form action={signOut}>
+            <button type="submit" className="rounded-full px-4 py-1.5 text-muted">Log out</button>
+          </form>
+        </nav>
+      )}
 
       <section className="mt-8 flex items-center gap-6" aria-label="Stats">
         <p><span className="font-mono text-2xl">{total}</span> <span className="text-muted">seshes</span></p>
@@ -54,7 +78,7 @@ export default async function ProfilePage({ params, searchParams }: {
         ) : months.map((m) => (
           <div key={m.label} className="mb-8">
             <h2 className="font-display border-b border-line pb-2 text-[20px]">{m.label}</h2>
-            {m.items.map((item, i) => <SessionCard key={item.id} item={item} index={i} />)}
+            {m.items.map((item, i) => <SessionCard key={item.id} item={item} index={i} isMine={isSelf} />)}
           </div>
         ))}
       </section>

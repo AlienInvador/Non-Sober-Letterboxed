@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@/lib/supabase/client'
+import { takeNext } from '@/actions/auth'
 
 export default function Onboarding() {
   const router = useRouter()
@@ -21,8 +22,13 @@ export default function Onboarding() {
       display_name: username,
       birthdate: String(f.get('dob')),
     })
-    if (error) setError(/21/.test(error.message) ? 'You must be 21 or older to join.' : error.message)
-    else router.push('/')
+    if (error) {
+      setError(
+        error.code === '23505' ? 'That username is taken.'
+          : error.code === 'P0001' ? 'You must be 21 or older to join.'
+          : 'Could not create your profile. Try again.',
+      )
+    } else router.push(await takeNext())
   }
 
   return (

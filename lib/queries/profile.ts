@@ -1,6 +1,6 @@
 import 'server-only'
 import { createServerClient } from '@/lib/supabase/server'
-import { orderedPair } from '@/lib/friends'
+import { orderedPair, escapeLike } from '@/lib/friends'
 import type { Influence } from '@/lib/influence'
 import type { FeedItem } from '@/lib/queries/feed'
 import { influenceBreakdown, monthLabel } from '@/lib/profile-stats'
@@ -24,7 +24,7 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
   const me = auth.user?.id
   if (!me) throw new Error('not signed in')
 
-  const { data: p, error } = await sb.from('profiles').select('id, username, display_name, avatar_url').eq('username', username).maybeSingle()
+  const { data: p, error } = await sb.from('profiles').select('id, username, display_name, avatar_url').ilike('username', escapeLike(username)).maybeSingle()
   if (error) throw new Error(error.message)
   if (!p) return null
 

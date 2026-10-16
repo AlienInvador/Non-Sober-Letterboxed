@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { safeNext } from '@/lib/safe-next'
 
 const PUBLIC = ['/gate', '/auth', '/welcome']
 
@@ -9,6 +10,11 @@ export async function updateSession(request: NextRequest) {
   const go = (to: string) => {
     const res = NextResponse.redirect(new URL(to, request.url))
     response.cookies.getAll().forEach((c) => res.cookies.set(c))
+    // remember where the visitor was headed (invite links) across gate, login and onboarding
+    const target = pathname + request.nextUrl.search
+    if (safeNext(target) && pathname !== '/' && !pathname.startsWith('/api') && !PUBLIC.some((p) => pathname.startsWith(p)) && pathname !== '/onboarding') {
+      res.cookies.set('next', target, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 600, path: '/' })
+    }
     return res
   }
 

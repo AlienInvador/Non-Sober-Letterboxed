@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogButton } from '@/components/log-sheet'
+import { signOut } from '@/actions/auth'
 
 export function navItems(username: string) {
   return [
@@ -32,6 +33,9 @@ export function NavRail({ username }: { username: string }) {
         ))}
       </ul>
       <LogButton />
+      <form action={signOut} className="mt-auto">
+        <button type="submit" className="rounded-control px-3 py-2 text-sm text-muted">Log out</button>
+      </form>
     </nav>
   )
 }

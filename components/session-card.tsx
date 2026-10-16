@@ -6,12 +6,13 @@ import { relativeTime } from '@/lib/time'
 import { tokens } from '@/design/tokens'
 import { InfluenceDot } from '@/components/influence-chip'
 import { CheersButton } from '@/components/cheers-button'
+import { DeleteSesh } from '@/components/delete-sesh'
 
 const WHEN = { drunk: 'drunk', high: 'high', both: 'drunk and high', sober: '' }
 const verdict = (i: FeedItem) =>
   i.recommend === null || i.influence === 'sober' ? null : `${i.recommend ? 'Recommends it' : 'Would skip it'} ${WHEN[i.influence]}`
 
-export function SessionCard({ item, index = 0 }: { item: FeedItem; index?: number }) {
+export function SessionCard({ item, index = 0, isMine = false }: { item: FeedItem; index?: number; isMine?: boolean }) {
   const poster = posterUrl(item.movie.posterPath, 'w185')
   const color = tokens.color[item.influence]
   return (
@@ -38,8 +39,9 @@ export function SessionCard({ item, index = 0 }: { item: FeedItem; index?: numbe
           {verdict(item) && <span>· {verdict(item)}</span>}
         </p>
         {item.review && <p className="mt-3 text-[17px] leading-[1.7] text-body">{item.review}</p>}
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-3">
           <CheersButton sessionId={item.id} count={item.cheers} cheered={item.cheeredByMe} />
+          {isMine && <DeleteSesh sessionId={item.id} />}
         </div>
       </div>
     </article>

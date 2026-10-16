@@ -22,7 +22,7 @@ export default async function Tonight() {
     const sb = await createServerClient()
     const { data: auth } = await sb.auth.getUser()
     const { data: prof } = await sb.from('profiles').select('username').eq('id', auth.user!.id).single()
-    data = { feed, queue, hero, recs, username: prof?.username ?? '' }
+    data = { feed, queue, hero, recs, username: prof?.username ?? '', me: auth.user!.id }
   } catch (e) {
     unstable_rethrow(e)
     return (
@@ -32,7 +32,7 @@ export default async function Tonight() {
       </main>
     )
   }
-  const { feed, queue, hero, recs, username } = data
+  const { feed, queue, hero, recs, username, me } = data
   const backdrop = hero && posterUrl(hero.backdropPath, 'w1280')
 
   return (
@@ -59,7 +59,10 @@ export default async function Tonight() {
 
       {queue.length > 0 && (
         <section className="mt-12">
-          <h2 className="font-display text-2xl">Up next in your queue</h2>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-2xl">Up next in your queue</h2>
+            <Link href="/queue" className="text-sm text-muted underline underline-offset-2">See all</Link>
+          </div>
           <ul className="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
             {queue.map(({ movie, influence, pct }) => {
               const poster = posterUrl(movie.posterPath, 'w342')
@@ -103,7 +106,7 @@ export default async function Tonight() {
           </div>
         ) : (
           <div className="mt-2">
-            {feed.map((item, i) => <SessionCard key={item.id} item={item} index={i} />)}
+            {feed.map((item, i) => <SessionCard key={item.id} item={item} index={i} isMine={item.profile.id === me} />)}
           </div>
         )}
       </section>

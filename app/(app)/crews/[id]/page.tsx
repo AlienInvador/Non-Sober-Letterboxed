@@ -82,7 +82,7 @@ export default async function CrewPage({ params }: { params: Promise<{ id: strin
         {feed.length === 0 ? (
           <p className="mt-2 text-muted">Nothing logged to this crew yet.</p>
         ) : (
-          feed.map((item, i) => <SessionCard key={item.id} item={item} index={i} />)
+          feed.map((item, i) => <SessionCard key={item.id} item={item} index={i} isMine={item.profile.id === me} />)
         )}
       </section>
     </main>
