@@ -18,9 +18,6 @@ export async function verifyAge(_prev: GateState, formData: FormData): Promise<G
     path: '/',
   })
   const next = safeNext(store.get('next')?.value)
-  if (next) {
-    store.delete('next')
-    redirect(next)
-  }
-  redirect('/auth/login')
+  store.delete('next')
+  redirect(next ?? '/auth/login')
 }

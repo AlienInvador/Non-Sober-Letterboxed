@@ -14,11 +14,13 @@ test.describe('bob', () => {
     await page.goto('/')
     const card = page.locator('article', { hasText: SEED_REVIEW })
     await expect(card.getByRole('button', { name: 'Cheers, 0 so far' })).toBeVisible()
-    await card.getByRole('button', { name: 'Cheers, 0 so far' }).click()
+    // The toggle is optimistic; wait for the server action to commit before reloading.
+    const saved = (p: typeof page) => p.waitForResponse((r) => r.request().method() === 'POST' && !!r.request().headers()['next-action'])
+    await Promise.all([saved(page), card.getByRole('button', { name: 'Cheers, 0 so far' }).click()])
     await expect(card.getByRole('button', { name: 'Cheers, 1 so far' })).toHaveAttribute('aria-pressed', 'true')
     await page.reload()
     await expect(card.getByRole('button', { name: 'Cheers, 1 so far' })).toBeVisible()
-    await card.getByRole('button', { name: 'Cheers, 1 so far' }).click()
+    await Promise.all([saved(page), card.getByRole('button', { name: 'Cheers, 1 so far' }).click()])
     await expect(card.getByRole('button', { name: 'Cheers, 0 so far' })).toHaveAttribute('aria-pressed', 'false')
   })
 
