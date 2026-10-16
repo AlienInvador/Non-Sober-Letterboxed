@@ -14,4 +14,8 @@ test('21+ passes to login', async ({ page }) => {
   await page.getByLabel('Date of birth').fill('1995-05-05')
   await page.getByRole('button', { name: 'Enter' }).click()
   await expect(page).toHaveURL(/\/auth\/login/)
+  // onboarding reuses the gate's birthdate instead of asking again
+  const dob = (await page.context().cookies()).find((c) => c.name === 'dob')
+  expect(dob?.value).toBe('1995-05-05')
+  expect(dob?.httpOnly).toBe(true)
 })

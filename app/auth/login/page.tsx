@@ -9,14 +9,24 @@ export default function Login() {
 
   async function magic(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setError('')
     const email = String(new FormData(e.currentTarget).get('email'))
-    const { error } = await createBrowserClient().auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } })
-    if (error) setError(error.message)
-    else setSent(true)
+    try {
+      const { error } = await createBrowserClient().auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } })
+      if (error) setError(error.message)
+      else setSent(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send the link. Try again.')
+    }
   }
   async function google() {
-    const { error } = await createBrowserClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectTo() } })
-    if (error) setError(error.message)
+    setError('')
+    try {
+      const { error } = await createBrowserClient().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectTo() } })
+      if (error) setError(error.message)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Google sign-in failed. Try again.')
+    }
   }
 
   return (
