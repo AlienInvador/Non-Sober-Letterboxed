@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound, unstable_rethrow } from 'next/navigation'
 import { getFriendVerdicts, getMoviePage } from '@/lib/queries/movie'
-import { posterUrl } from '@/lib/tmdb'
+import { posterUrl, TmdbError } from '@/lib/tmdb'
 import { influenceLabel, normalizeInfluenceFilter, stateWord, verdict } from '@/lib/influence'
 import { tokens } from '@/design/tokens'
 import { HowItHits } from '@/components/how-it-hits'
@@ -27,6 +27,7 @@ export default async function MoviePage({
     data = { ...page, friendVerdicts, queued }
   } catch (e) {
     unstable_rethrow(e)
+    if (e instanceof TmdbError && e.status === 404) notFound()
     return (
       <main className="p-10">
         <h1 className="font-display text-3xl">Couldn&apos;t load this movie</h1>

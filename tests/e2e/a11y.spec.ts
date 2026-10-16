@@ -43,9 +43,12 @@ test.describe('a11y signed out', () => {
       await page.goto('/')
       const wrap = page.getByTestId('page-transition')
       await expect(wrap).toBeAttached()
-      const s = await wrap.evaluate((el) => getComputedStyle(el))
-      expect(['none', '']).toContain(s.transform === 'none' ? 'none' : s.transform)
-      expect(s.animationName).toBe('none')
+      // reduced-motion collapses the CSS entry animation to ~0ms: it settles at once on the final (visible, untransformed) state
+      await expect.poll(() => wrap.evaluate((el) => el.getAnimations().every((a) => a.playState === 'finished'))).toBe(true)
+      const s = await wrap.evaluate((el) => ({ t: getComputedStyle(el).transform, o: getComputedStyle(el).opacity, d: getComputedStyle(el).animationDuration }))
+      expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(s.t) // identity: no rise left
+      expect(s.o).toBe('1')
+      expect(parseFloat(s.d)).toBeLessThan(0.001)
       const m = await page.getByTestId('marquee-track').evaluate((el) => getComputedStyle(el).animationName)
       expect(m).toBe('none')
     })

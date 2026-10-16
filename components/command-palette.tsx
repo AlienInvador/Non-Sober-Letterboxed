@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Command } from 'cmdk'
+import { Dialog } from 'radix-ui'
 import { searchUsers, type FriendProfile } from '@/actions/friends'
 import { getMyWritableLists, type MyList } from '@/actions/lists'
 
@@ -71,6 +72,7 @@ export function CommandPalette() {
       overlayClassName="fixed inset-0 z-40 bg-black/55"
       contentClassName="fixed left-1/2 top-[15vh] z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-card bg-raised text-text"
     >
+      <Dialog.Title className="sr-only">Search</Dialog.Title>
       <Command.Input
         value={q}
         onValueChange={setQ}

@@ -1,3 +1,4 @@
+import { test, expect } from 'vitest'
 import { tokens } from '@/design/tokens'
 test('influence colors match spec', () => {
   expect(tokens.color.bg).toBe('#2A2522')
