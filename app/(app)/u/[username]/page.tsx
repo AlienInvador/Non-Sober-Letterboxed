@@ -18,7 +18,7 @@ export default async function ProfilePage({ params, searchParams }: {
   if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) notFound()
   const data = await getProfile(username)
   if (!data) notFound()
-  const { profile, status, total, breakdown, months, lists } = data
+  const { profile, status, total, movieCount, spotCount, breakdown, months, lists } = data
   const shown = ORDER.filter((k) => breakdown[k] > 0)
   const isSelf = status === 'self'
   let requests = 0
@@ -49,6 +49,7 @@ export default async function ProfilePage({ params, searchParams }: {
             Friends{requests > 0 && <span className="ml-2 font-mono text-accent">{requests} {requests === 1 ? 'request' : 'requests'}</span>}
           </Link>
           <Link href="/queue" className="rounded-full bg-raised px-4 py-1.5">Queue</Link>
+          <Link href="/settings" className="rounded-full bg-raised px-4 py-1.5">Settings</Link>
           <form action={signOut}>
             <button type="submit" className="rounded-full px-4 py-1.5 text-muted">Log out</button>
           </form>
@@ -56,7 +57,7 @@ export default async function ProfilePage({ params, searchParams }: {
       )}
 
       <section className="mt-8 flex items-center gap-6" aria-label="Stats">
-        <p><span className="font-mono text-2xl">{total}</span> <span className="text-muted">seshes</span></p>
+        <p><span className="font-mono text-2xl">{total}</span> <span className="text-muted">seshes</span> <span className="text-sm text-muted">{movieCount} {movieCount === 1 ? 'movie' : 'movies'} · {spotCount} {spotCount === 1 ? 'spot' : 'spots'}</span></p>
         {shown.length > 0 && (
           <div className="flex-1">
             <div className="flex h-2 overflow-hidden rounded-full bg-track" role="img"

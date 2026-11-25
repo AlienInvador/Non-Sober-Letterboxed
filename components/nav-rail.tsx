@@ -33,9 +33,12 @@ export function NavRail({ username }: { username: string }) {
         ))}
       </ul>
       <LogButton />
-      <form action={signOut} className="mt-auto">
-        <button type="submit" className="rounded-control px-3 py-2 text-sm text-muted">Log out</button>
-      </form>
+      <div className="mt-auto flex flex-col">
+        <Link href="/settings" aria-current={isActive(path, '/settings') ? 'page' : undefined} className="rounded-control px-3 py-2 text-sm text-muted aria-[current=page]:text-text">Settings</Link>
+        <form action={signOut}>
+          <button type="submit" className="rounded-control px-3 py-2 text-sm text-muted">Log out</button>
+        </form>
+      </div>
     </nav>
   )
 }

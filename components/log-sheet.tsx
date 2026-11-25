@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Dialog } from 'radix-ui'
 import { motion } from 'motion/react'
 import { Check } from 'lucide-react'
@@ -9,8 +9,11 @@ import { InfluenceChip } from '@/components/influence-chip'
 import { RecommendToggle } from '@/components/recommend-toggle'
 import { createSession, getLogContext, type LogContext } from '@/actions/sessions'
 import { SendRecForm } from '@/components/send-rec'
+import { SpotPicker, type PickedSpot } from '@/components/spot-picker'
+import { PlaceTile } from '@/components/place-tile'
+import type { PlaceCategory } from '@/lib/places'
 
-export type LogPreset = { watchedOn?: string; companionIds?: string[]; fromTagSessionId?: string }
+export type LogPreset = { place?: { name: string; category: PlaceCategory | null }; watchedOn?: string; companionIds?: string[]; fromTagSessionId?: string }
 type Ctx = { open(movie?: MovieSummary, preset?: LogPreset): void }
 const LogSheetCtx = createContext<Ctx>({ open: () => {} })
 export const useLogSheet = () => useContext(LogSheetCtx)
@@ -77,6 +80,9 @@ const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 
 function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary | null; preset: LogPreset; onSaved: (autoClose: boolean) => void; onClose: () => void }) {
   const [movie, setMovie] = useState<MovieSummary | null>(initial)
+  const [place, setPlace] = useState<PickedSpot | null>(preset.place ?? null)
+  const [mode, setMode] = useState<'movie' | 'food'>(preset.place ? 'food' : 'movie')
+  const visTouched = useRef(false)
   const [chips, setChips] = useState({ drunk: false, high: false, sober: false })
   const [recommend, setRecommend] = useState<boolean | null>(null)
   const [more, setMore] = useState(false)
@@ -94,21 +100,26 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
 
   const influence = influenceFromChips(chips)
   const crewMissing = visibility === 'crew' && !crewId
-  const canSave = !!movie && !!influence && (influence === 'sober' || recommend !== null) && !crewMissing && !saving
+  const subject = mode === 'food' ? place : movie
+  const canSave = !!ctx && !!subject && !!influence && (influence === 'sober' || recommend !== null) && !crewMissing && !saving
 
   useEffect(() => {
-    if (more && !ctx) getLogContext().then(setCtx).catch(() => setCtx({ friends: [], crews: [] }))
-  }, [more, ctx])
+    // load on open (not only on "more") so the default visibility applies
+    getLogContext().then(setCtx).catch(() => setCtx({ friends: [], crews: [], defaultVisibility: 'private' }))
+  }, [])
+  useEffect(() => {
+    if (ctx && !visTouched.current) setVisibility(ctx.defaultVisibility)
+  }, [ctx])
 
   const pick = (k: 'drunk' | 'high') => setChips((c) => ({ ...c, [k]: !c[k], sober: false }))
 
   async function save() {
-    if (!movie || !influence) return
+    if (!subject || !influence) return
     setSaving(true)
     setError('')
     try {
       const res = await createSession({
-        tmdbId: movie.tmdbId, influence,
+        ...(mode === 'food' ? { place: place! } : { tmdbId: movie!.tmdbId }), influence,
         recommend: influence === 'sober' ? null : recommend,
         review: review.trim() || null, visibility,
         crewId: visibility === 'crew' ? crewId : null,
@@ -119,7 +130,7 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
         setDone(true)
         setSessionId(res.id)
         // a recommended sesh stays open so the "Send this rec" offer can be used
-        onSaved(!(influence !== 'sober' && recommend === true))
+        onSaved(!(mode === 'movie' && influence !== 'sober' && recommend === true))
       } else setError(res.error)
     } catch {
       setError('Could not reach the server. Your picks are still here, try again.')
@@ -127,25 +138,50 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
     setSaving(false)
   }
 
-  if (!movie) return <MoviePicker onPick={setMovie} />
-  if (recOpen && influence && influence !== 'sober') {
-    return <SendRecForm movie={movie} influence={influence} sessionId={sessionId} onDone={onClose} />
+  const tabs = (
+    <div role="group" aria-label="What did you log" className="flex gap-1 rounded-control bg-card p-1">
+      {(['movie', 'food'] as const).map((m) => (
+        <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)} className={`flex-1 rounded-control px-3 py-1.5 text-sm ${mode === m ? 'bg-selected font-semibold' : 'text-muted'}`}>
+          {m === 'movie' ? 'Movie' : 'Food'}
+        </button>
+      ))}
+    </div>
+  )
+  if (!subject) {
+    return (
+      <div className="flex flex-col gap-3">
+        {tabs}
+        {mode === 'food' ? <SpotPicker onPick={setPlace} /> : <MoviePicker onPick={setMovie} />}
+      </div>
+    )
+  }
+  if (mode === 'movie' && recOpen && influence && influence !== 'sober') {
+    return <SendRecForm movie={movie!} influence={influence} sessionId={sessionId} onDone={onClose} />
   }
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-4">
-        <div className="h-24 w-16 shrink-0 overflow-hidden rounded-poster bg-card">
-          {movie.posterPath && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={`https://image.tmdb.org/t/p/w185${movie.posterPath}`} alt="" className="size-full object-cover" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-xl">{movie.title}</p>
-          <p className="text-sm text-muted">{movie.year ?? ''}</p>
-        </div>
-        <button type="button" onClick={() => setMovie(null)} className="text-sm text-muted underline">Change</button>
+        {mode === 'food' ? (
+          <>
+            <PlaceTile place={{ id: '', name: place!.name, category: place!.category }} size="sm" showName={false} />
+            <div className="min-w-0 flex-1"><p className="font-display text-xl">{place!.name}</p></div>
+          </>
+        ) : (
+          <>
+            <div className="h-24 w-16 shrink-0 overflow-hidden rounded-poster bg-card">
+              {movie!.posterPath && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`https://image.tmdb.org/t/p/w185${movie!.posterPath}`} alt="" className="size-full object-cover" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-xl">{movie!.title}</p>
+              <p className="text-sm text-muted">{movie!.year ?? ''}</p>
+            </div>
+          </>
+        )}
+        <button type="button" onClick={() => (mode === 'food' ? setPlace(null) : setMovie(null))} className="text-sm text-muted underline">Change</button>
       </div>
 
       <section className="flex flex-col gap-2">
@@ -188,7 +224,7 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
             </fieldset>
             <label className="flex flex-col gap-1 text-sm text-muted">
               Visibility
-              <select value={visibility} onChange={(e) => setVisibility(e.target.value as typeof visibility)} className={field}>
+              <select value={visibility} onChange={(e) => { visTouched.current = true; setVisibility(e.target.value as typeof visibility) }} className={field}>
                 <option value="friends">Friends</option>
                 <option value="crew">Crew</option>
                 <option value="public">Public</option>
@@ -206,7 +242,7 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
             )}
             <textarea value={review} onChange={(e) => setReview(e.target.value)} placeholder="Review (optional)" rows={3} className={field} />
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={rewatch} onChange={(e) => setRewatch(e.target.checked)} /> Rewatch
+              <input type="checkbox" checked={rewatch} onChange={(e) => setRewatch(e.target.checked)} /> {mode === 'food' ? 'Been before' : 'Rewatch'}
             </label>
           </div>
         )}
@@ -219,7 +255,7 @@ function LogForm({ initial, preset, onSaved, onClose }: { initial: MovieSummary 
           <Check aria-hidden className="size-8 text-high" />
           <p className="font-semibold">Logged.</p>
           <p className="font-note text-xl text-note">cheers to that.</p>
-          {influence !== 'sober' && recommend === true && (
+          {mode === 'movie' && influence !== 'sober' && recommend === true && (
             <button type="button" onClick={() => setRecOpen(true)} className="mt-2 text-sm font-semibold text-accent underline">
               Send this rec to…
             </button>

@@ -21,7 +21,7 @@ export function SendRecForm({ movie, influence: initialInfluence, sessionId, onD
   const [sent, setSent] = useState(0)
 
   useEffect(() => {
-    getLogContext().then(setCtx).catch(() => setCtx({ friends: [], crews: [] }))
+    getLogContext().then(setCtx).catch(() => setCtx({ friends: [], crews: [], defaultVisibility: 'private' }))
   }, [])
 
   const canSend = !!influence && (to.length > 0 || !!crewId) && !sending

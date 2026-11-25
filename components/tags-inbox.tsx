@@ -2,6 +2,9 @@
 import { useState, useTransition } from 'react'
 import { declineTag } from '@/actions/tags'
 import { useLogSheet } from '@/components/log-sheet'
+import { subjectTitle } from '@/lib/subject'
+import { PlaceTile } from '@/components/place-tile'
+import type { PlaceCategory } from '@/lib/places'
 import type { TagItem } from '@/lib/queries/tags'
 
 export function TagsInbox({ tags }: { tags: TagItem[] }) {
@@ -16,12 +19,12 @@ function TagRow({ tag }: { tag: TagItem }) {
   const [pending, start] = useTransition()
   const [error, setError] = useState('')
   const { open } = useLogSheet()
-  const title = tag.movie.title
+  const title = subjectTitle(tag.subject)
   return (
     <li className="flex gap-4 py-4">
       <span className="block aspect-[2/3] w-[72px] shrink-0 overflow-hidden rounded-poster bg-raised">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {tag.poster && <img src={tag.poster} alt="" className="size-full object-cover" />}
+        {tag.subject.kind === 'place' ? <span aria-hidden><PlaceTile place={tag.subject.place} size="sm" /></span> : tag.poster && <img src={tag.poster} alt="" className="size-full object-cover" />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-note text-2xl text-note">{tag.taggerUsername} tagged you on {title} · {tag.watchedOn}</p>
@@ -29,10 +32,14 @@ function TagRow({ tag }: { tag: TagItem }) {
           <button
             type="button"
             aria-label={`Approve tag from ${tag.taggerUsername} on ${title}`}
-            onClick={() => open(tag.movie, {
-              watchedOn: tag.watchedOn, fromTagSessionId: tag.sessionId,
-              companionIds: tag.taggerIsFriend ? [tag.taggerId] : [],
-            })}
+            onClick={() => {
+              const preset = {
+                watchedOn: tag.watchedOn, fromTagSessionId: tag.sessionId,
+                companionIds: tag.taggerIsFriend ? [tag.taggerId] : [],
+              }
+              if (tag.subject.kind === 'movie') open(tag.subject.movie, preset)
+              else open(undefined, { ...preset, place: { name: tag.subject.place.name, category: tag.subject.place.category as PlaceCategory | null } })
+            }}
             className="font-semibold text-accent"
           >
             Approve

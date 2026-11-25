@@ -1,8 +1,16 @@
 import { z } from 'zod'
+import { PLACE_CATEGORIES, nameKey } from '@/lib/places'
+
+const place = z.object({
+  name: z.string().trim().min(1).max(80)
+    .refine((n) => nameKey(n) !== '', 'Give the spot a name with letters or numbers.'),
+  category: z.enum(PLACE_CATEGORIES).nullable(),
+})
 
 export const sessionInput = z
   .object({
-    tmdbId: z.number().int().positive(),
+    tmdbId: z.number().int().positive().optional(),
+    place: place.optional(),
     influence: z.enum(['drunk', 'high', 'both', 'sober']),
     recommend: z.boolean().nullable().default(null),
     review: z.string().max(2000, 'Keep the review under 2000 characters.').nullable().default(null),
@@ -12,6 +20,10 @@ export const sessionInput = z
     fromTagSessionId: z.uuid().optional(),
     rewatch: z.boolean().default(false),
     watchedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .refine((s) => (s.tmdbId !== undefined) !== (s.place !== undefined), {
+    path: ['place'],
+    message: 'Pick a movie or a spot, not both.',
   })
   .refine((s) => (s.influence === 'sober') === (s.recommend === null), {
     path: ['recommend'],

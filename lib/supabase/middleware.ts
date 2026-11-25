@@ -45,10 +45,12 @@ export async function updateSession(request: NextRequest) {
     return res
   }
   if (!user && pathname.startsWith('/welcome')) return response
+  // legal pages are public: no age gate, no login
+  if (pathname === '/terms' || pathname === '/privacy') return response
   if (!request.cookies.get('age_ok') && pathname !== '/gate') return go('/gate')
-  if (user && pathname === '/auth/login') return go('/')
-  // /api/tmdb stays behind age_ok but skips the login redirect
-  if (pathname.startsWith('/api/tmdb') || PUBLIC.some((p) => pathname.startsWith(p))) return response
+  if (user && ['/auth/login', '/auth/signup', '/auth/reset'].includes(pathname)) return go('/')
+  // /api/tmdb and /api/places stay behind age_ok but skip the login redirect
+  if (pathname.startsWith('/api/tmdb') || pathname.startsWith('/api/places') || PUBLIC.some((p) => pathname.startsWith(p))) return response
   if (!user) return go('/auth/login')
   if (pathname !== '/onboarding') {
     const { data, error } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()

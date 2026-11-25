@@ -6,6 +6,8 @@ import { InfluenceDot } from '@/components/influence-chip'
 import { GenreSelect } from '@/components/genre-select'
 import { LogButton } from '@/components/log-sheet'
 import { PosterTile } from '@/components/poster-tile'
+import { PlaceTile } from '@/components/place-tile'
+import { subjectHref } from '@/lib/subject'
 import { tokens } from '@/design/tokens'
 
 const TABS: DiscoverTab[] = ['high', 'drunk', 'both']
@@ -67,12 +69,18 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
         <section className="mt-12">
           <h2 className="font-display text-2xl">Trending with friends</h2>
           <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
-            {trending.map((t) => (
-              <div key={t.movie.tmdbId} className="w-28 shrink-0">
-                <PosterTile movie={t.movie} href={`/movie/${t.movie.tmdbId}`} />
-                <p className="mt-1 text-xs text-muted">{t.friendCount} {t.friendCount === 1 ? 'friend' : 'friends'} watched</p>
-              </div>
-            ))}
+            {trending.map((t) => {
+              const sub = t.subject
+              const href = subjectHref(sub)
+              return (
+                <div key={href} className="w-28 shrink-0">
+                  {sub.kind === 'movie'
+                    ? <PosterTile movie={sub.movie} href={href} />
+                    : <Link href={href}><PlaceTile place={sub.place} /></Link>}
+                  <p className="mt-1 text-xs text-muted">{t.friendCount} {t.friendCount === 1 ? 'friend' : 'friends'} {sub.kind === 'movie' ? 'watched' : 'went'}</p>
+                </div>
+              )
+            })}
           </div>
         </section>
       )}

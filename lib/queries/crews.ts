@@ -36,7 +36,7 @@ export async function getCrewPage(crewId: string) {
   const byMovie = new Map<number, TopPick>()
   for (const r of picks.data ?? []) {
     const m = r.movies as unknown as { tmdb_id: number; title: string; year: number | null; poster_path: string | null } | null
-    if (!m) continue
+    if (!m) continue // spot seshes don't count toward movie picks
     const cur = byMovie.get(m.tmdb_id) ?? { movie: { tmdbId: m.tmdb_id, title: m.title, year: m.year, posterPath: m.poster_path }, count: 0 }
     cur.count++
     byMovie.set(m.tmdb_id, cur)

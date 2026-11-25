@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createServerClient } from '@/lib/supabase/server'
 import { ensureMovieCached } from '@/lib/movies'
+import { ensurePlaceCached } from '@/lib/place-cache'
 import { sessionInput, type SessionInput } from '@/lib/session-schema'
 
 export type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string }
@@ -16,16 +17,26 @@ export async function createSession(input: SessionInput): Promise<Result<{ id: s
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return { ok: false, error: 'You are signed out. Sign in again.' }
 
-  try {
-    await ensureMovieCached(s.tmdbId)
-  } catch {
-    return { ok: false, error: 'Could not reach the movie database. Try again.' }
+  let subject: { tmdb_id: number } | { place_id: string }
+  if (s.place) {
+    try {
+      subject = { place_id: await ensurePlaceCached(s.place) }
+    } catch {
+      return { ok: false, error: 'Could not save that spot. Try again.' }
+    }
+  } else {
+    try {
+      await ensureMovieCached(s.tmdbId!)
+    } catch {
+      return { ok: false, error: 'Could not reach the movie database. Try again.' }
+    }
+    subject = { tmdb_id: s.tmdbId! }
   }
 
   const { data, error } = await supabase
     .from('sessions')
     .insert({
-      user_id: auth.user.id, tmdb_id: s.tmdbId, watched_on: s.watchedOn, influence: s.influence,
+      user_id: auth.user.id, ...subject, watched_on: s.watchedOn, influence: s.influence,
       recommend: s.recommend, review: s.review?.trim() || null,
       visibility: s.visibility, crew_id: s.crewId, rewatch: s.rewatch,
     })
@@ -69,23 +80,25 @@ export async function deleteSession(id: string): Promise<Result> {
   return { ok: true }
 }
 
-export type LogContext = { friends: { id: string; name: string; username: string; avatarUrl: string | null }[]; crews: { id: string; name: string }[] }
+export type LogContext = { friends: { id: string; name: string; username: string; avatarUrl: string | null }[]; crews: { id: string; name: string }[]; defaultVisibility: 'private' | 'crew' | 'friends' | 'public' }
 
 // Accepted friends + the user's crews, for the sheet's "More" section.
 export async function getLogContext(): Promise<LogContext> {
   const supabase = await createServerClient()
   const { data: auth } = await supabase.auth.getUser()
   const me = auth.user?.id
-  if (!me) return { friends: [], crews: [] }
+  if (!me) return { friends: [], crews: [], defaultVisibility: 'friends' }
   const { data: fr } = await supabase
     .from('friendships').select('user_a, user_b').eq('status', 'accepted').or(`user_a.eq.${me},user_b.eq.${me}`)
   const ids = (fr ?? []).map((f) => (f.user_a === me ? f.user_b : f.user_a))
   const { data: profs } = ids.length
     ? await supabase.from('profiles').select('id, username, display_name, avatar_url').in('id', ids)
     : { data: [] }
+  const { data: me_ } = await supabase.from('profiles').select('default_visibility').eq('id', me).maybeSingle()
   const { data: cm } = await supabase.from('crew_members').select('crews(id, name)').eq('user_id', me)
   return {
     friends: (profs ?? []).map((p) => ({ id: p.id, name: p.display_name || p.username, username: p.username, avatarUrl: p.avatar_url })),
+    defaultVisibility: me_?.default_visibility ?? 'friends',
     crews: (cm ?? []).flatMap((c) => (c.crews ? [c.crews as unknown as { id: string; name: string }] : [])),
   }
 }

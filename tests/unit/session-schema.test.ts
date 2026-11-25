@@ -33,4 +33,24 @@ describe('sessionInput', () => {
     expect(sessionInput.safeParse({ ...valid, review: 'a'.repeat(2001) }).success).toBe(false)
     expect(sessionInput.safeParse({ ...valid, companionIds: Array(21).fill(CREW) }).success).toBe(false)
   })
+  describe('place', () => {
+    const { tmdbId: _t, ...base } = valid
+    const spot = (place: unknown) => sessionInput.safeParse({ ...base, place })
+    it('needs exactly one of tmdbId or place', () => {
+      expect(sessionInput.safeParse({ ...valid, place: { name: 'Taco Bell', category: null } }).success).toBe(false)
+      expect(sessionInput.safeParse(base).success).toBe(false)
+    })
+    it('accepts a valid place with null category', () => {
+      expect(spot({ name: 'Taco Bell', category: null }).success).toBe(true)
+    })
+    it('rejects a name with no letters or numbers, with a clear message', () => {
+      const r = spot({ name: '🌮', category: null })
+      expect(r.success).toBe(false)
+      expect(r.error?.issues[0]?.message).toBe('Give the spot a name with letters or numbers.')
+    })
+    it('rejects an 81 char name and unknown category', () => {
+      expect(spot({ name: 'a'.repeat(81), category: null }).success).toBe(false)
+      expect(spot({ name: 'Shell', category: 'gas_station' }).success).toBe(false)
+    })
+  })
 })

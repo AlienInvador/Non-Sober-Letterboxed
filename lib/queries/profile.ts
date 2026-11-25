@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { orderedPair, escapeLike } from '@/lib/friends'
 import type { Influence } from '@/lib/influence'
 import { acceptedNames, COMPANIONS, type FeedItem } from '@/lib/queries/feed'
+import { SUBJECT, subjectOf } from '@/lib/subject'
 import { influenceBreakdown, monthLabel } from '@/lib/profile-stats'
 
 export { influenceBreakdown }
@@ -11,12 +12,12 @@ export type ProfileData = {
   profile: { id: string; username: string; displayName: string | null; avatarUrl: string | null }
   status: FriendStatus
   total: number
+  movieCount: number
+  spotCount: number
   breakdown: Record<Influence, number>
   months: { label: string; items: FeedItem[] }[]
   lists: { id: string; title: string; count: number }[]
 }
-
-type MovieRow = { tmdb_id: number; title: string; year: number | null; poster_path: string | null }
 
 export async function getProfile(username: string): Promise<ProfileData | null> {
   const sb = await createServerClient()
@@ -32,7 +33,7 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
   const [sessRes, listRes, frRes] = await Promise.all([
     // RLS decides which of their seshes I can read
     sb.from('sessions')
-      .select(`id, influence, recommend, review, watched_on, created_at, movies(tmdb_id, title, year, poster_path), cheers(user_id), ${COMPANIONS}`)
+      .select(`id, influence, recommend, review, watched_on, created_at, ${SUBJECT}, cheers(user_id), ${COMPANIONS}`)
       .eq('user_id', p.id).order('watched_on', { ascending: false }).order('created_at', { ascending: false }).limit(200),
     sb.from('lists').select('id, title, list_items(count)').eq('owner_id', p.id).order('title'),
     sb.from('friendships').select('status, requested_by').eq('user_a', a).eq('user_b', b).maybeSingle(),
@@ -41,16 +42,17 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
 
   const profile = { id: p.id, username: p.username, displayName: p.display_name, avatarUrl: p.avatar_url }
   const items: FeedItem[] = (sessRes.data ?? []).flatMap((r) => {
-    const m = r.movies as unknown as MovieRow | null
-    if (!m) return []
+    const subject = subjectOf(r)
+    if (!subject) return []
     const cheers = (r.cheers ?? []) as { user_id: string }[]
     return [{
-      id: r.id, profile, movie: { tmdbId: m.tmdb_id, title: m.title, year: m.year, posterPath: m.poster_path },
+      id: r.id, profile, subject,
       influence: r.influence as Influence, recommend: r.recommend, review: r.review, watchedOn: r.watched_on,
       createdAt: r.created_at as string, cursor: '', cheers: cheers.length, cheeredByMe: cheers.some((c) => c.user_id === me),
       withNames: acceptedNames(r.session_companions),
     }]
   })
+  const movieCount = items.filter((i) => i.subject.kind === 'movie').length
   const months: ProfileData['months'] = []
   for (const it of items) {
     const label = monthLabel(it.watchedOn)
@@ -64,5 +66,5 @@ export async function getProfile(username: string): Promise<ProfileData | null> 
   const lists = (listRes.data ?? []).map((l) => ({
     id: l.id, title: l.title, count: (l.list_items as unknown as { count: number }[])?.[0]?.count ?? 0,
   }))
-  return { profile, status, total: items.length, breakdown: influenceBreakdown(items), months, lists }
+  return { profile, status, total: items.length, movieCount, spotCount: items.length - movieCount, breakdown: influenceBreakdown(items), months, lists }
 }

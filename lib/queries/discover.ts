@@ -3,13 +3,15 @@ import { createServerClient } from '@/lib/supabase/server'
 import { rankForDiscover } from '@/lib/stats'
 import type { Influence } from '@/lib/influence'
 import type { MovieSummary } from '@/lib/tmdb'
+import { rankTrending } from '@/lib/trending'
+import type { Subject, PlaceSummary } from '@/lib/subject'
 
 export type DiscoverTab = 'high' | 'drunk' | 'both'
 export type DiscoverRow = {
   movie: MovieSummary; genre: string | null; logCount: number; recommendPct: number
   friends: { recommend: number; total: number } | null
 }
-export type Trending = { movie: MovieSummary; friendCount: number }
+export type Trending = { subject: Subject; friendCount: number }
 
 type MovieRow = { tmdb_id: number; title: string; year: number | null; poster_path: string | null; genres: string[] | null }
 const movieOf = (m: MovieRow): MovieSummary => ({ tmdbId: m.tmdb_id, title: m.title, year: m.year, posterPath: m.poster_path })
@@ -47,11 +49,12 @@ export async function getDiscover(tab: DiscoverTab, genre?: string) {
 
   // RLS limits these to seshes the caller can read; one query covers verdicts and trending
   const sess = friends.length
-    ? await sb.from('sessions').select('user_id, tmdb_id, influence, recommend, created_at')
+    ? await sb.from('sessions').select('user_id, tmdb_id, place_id, influence, recommend, created_at, places(id, name, category)')
         .in('user_id', friends).order('created_at', { ascending: false }).limit(1000)
     : { data: [], error: null }
   if (sess.error) throw new Error(sess.error.message)
-  const rows = sess.data ?? []
+  const all = sess.data ?? []
+  const rows = all.filter((s) => s.tmdb_id != null) // spot seshes have no movie; verdicts are movie-only
 
   const listed = new Set(ranked.map((r) => r.tmdbId))
   const latest = new Map<string, boolean | null>() // newest sesh per friend+movie in this state
@@ -73,16 +76,15 @@ export async function getDiscover(tab: DiscoverTab, genre?: string) {
     logCount: r.logCount, recommendPct: r.recommendPct!, friends: fv.get(r.tmdbId) ?? null,
   }))
 
-  const byMovie = new Map<number, Set<string>>()
-  for (const s of rows) {
-    if (s.created_at < since) continue
-    byMovie.set(s.tmdb_id, (byMovie.get(s.tmdb_id) ?? new Set()).add(s.user_id))
-  }
-  const trending: Trending[] = [...byMovie]
-    .filter(([id]) => movies.has(id))
-    .map(([id, u]) => ({ movie: movieOf(movies.get(id)!), friendCount: u.size }))
-    .sort((a, b) => b.friendCount - a.friendCount)
-    .slice(0, 8)
+  const places = new Map(all.flatMap((s) => (s.places ? [[s.place_id as string, s.places as unknown as PlaceSummary] as const] : [])))
+  const trending: Trending[] = rankTrending(all, since, 8).flatMap((t): Trending[] => {
+    if (t.kind === 'movie') {
+      const m = movies.get(Number(t.id))
+      return m ? [{ subject: { kind: 'movie', movie: movieOf(m) }, friendCount: t.friendCount }] : []
+    }
+    const p = places.get(t.id)
+    return p ? [{ subject: { kind: 'place', place: p }, friendCount: t.friendCount }] : []
+  })
 
   return { rows: rowsOut, trending, genres }
 }

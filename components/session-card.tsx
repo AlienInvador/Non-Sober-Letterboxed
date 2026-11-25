@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { FeedItem } from '@/lib/queries/feed'
 import { posterUrl } from '@/lib/tmdb'
+import { subjectHref, subjectTitle } from '@/lib/subject'
+import { PlaceTile } from '@/components/place-tile'
 import { influenceLabel } from '@/lib/influence'
 import { relativeTime } from '@/lib/time'
 import { tokens } from '@/design/tokens'
@@ -13,17 +15,18 @@ const verdict = (i: FeedItem) =>
   i.recommend === null || i.influence === 'sober' ? null : `${i.recommend ? 'Recommends it' : 'Would skip it'} ${WHEN[i.influence]}`
 
 export function SessionCard({ item, index = 0, isMine = false }: { item: FeedItem; index?: number; isMine?: boolean }) {
-  const poster = posterUrl(item.movie.posterPath, 'w185')
+  const s = item.subject
+  const poster = s.kind === 'movie' ? posterUrl(s.movie.posterPath, 'w185') : null
   const color = tokens.color[item.influence]
   return (
     <article
       className="rise group flex gap-5 border-b border-line py-6 last:border-b-0"
       style={{ '--i': index } as React.CSSProperties}
     >
-      <Link href={`/movie/${item.movie.tmdbId}`} className="block h-[162px] w-[108px] shrink-0 overflow-hidden rounded-poster bg-raised">
-        {poster && (
+      <Link href={subjectHref(s)} aria-label={subjectTitle(s)} className="block h-[162px] w-[108px] shrink-0 overflow-hidden rounded-poster bg-raised">
+        {s.kind === 'place' ? <PlaceTile place={s.place} showName={false} /> : poster && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={poster} alt={item.movie.title} className="size-full object-cover" />
+          <img src={poster} alt={subjectTitle(s)} className="size-full object-cover" />
         )}
       </Link>
       <div className="min-w-0 flex-1">
@@ -32,7 +35,7 @@ export function SessionCard({ item, index = 0, isMine = false }: { item: FeedIte
           {' · '}
           <span className="font-mono text-xs">{relativeTime(item.createdAt)}</span>
         </p>
-        <h3 className="font-display mt-1 text-2xl">{item.movie.title}</h3>
+        <h3 className="font-display mt-1 text-2xl">{subjectTitle(s)}</h3>
         {item.withNames.length > 0 && <p className="text-sm text-muted">with {item.withNames.join(', ')}</p>}
         <p className="mt-2 flex items-center gap-2 text-sm" style={{ color }}>
           <InfluenceDot influence={item.influence} />
