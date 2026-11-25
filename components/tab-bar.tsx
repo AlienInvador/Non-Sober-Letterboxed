@@ -13,16 +13,16 @@ export function TabBar({ username }: { username: string }) {
       key={i.label}
       href={i.href}
       aria-current={isActive(path, i.href) ? 'page' : undefined}
-      className="flex-1 py-3 text-center text-xs text-muted aria-[current=page]:text-text"
+      className="flex min-h-11 flex-1 items-center justify-center text-xs text-muted aria-[current=page]:text-text"
     >
       {i.label}
     </Link>
   )
   return (
-    <nav aria-label="Tabs" className="fixed inset-x-0 bottom-0 z-30 flex items-center border-t border-line bg-bg md:hidden">
+    <nav aria-label="Tabs" className="fixed inset-x-0 bottom-0 z-30 flex items-center border-t border-line bg-bg pb-[env(safe-area-inset-bottom)] md:hidden">
       {tab(tonight)}
       {tab(discover)}
-      <button type="button" onClick={() => open()} className="mx-1 -mt-4 rounded-full bg-accent-fill px-4 py-3 text-xs font-semibold text-white">
+      <button type="button" onClick={() => open()} className="press mx-1 -mt-4 rounded-full bg-accent-fill px-4 py-3 text-xs font-semibold text-white">
         <span aria-hidden>Log</span>
         <span className="sr-only">Log a sesh</span>
       </button>

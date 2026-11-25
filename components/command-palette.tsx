@@ -81,7 +81,7 @@ export function CommandPalette() {
       />
       <Command.List className="max-h-[50vh] overflow-y-auto p-2">
         {down && (
-          <button type="button" onClick={() => search(q.trim())} className="w-full rounded-control px-3 py-2 text-left text-sm text-accent">
+          <button type="button" onClick={() => search(q.trim())} className="w-full rounded-control px-3 py-2 text-left text-sm text-note">
             Search is down — retry
           </button>
         )}

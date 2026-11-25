@@ -24,9 +24,7 @@ export function CheersButton({ sessionId, count, cheered }: { sessionId: string;
       aria-label={`Cheers, ${s.count} so far`}
       aria-pressed={s.cheered}
       onClick={click}
-      className={`inline-flex h-9 items-center gap-2 rounded-full bg-raised px-4 text-sm transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 ${
-        s.cheered ? 'text-text opacity-100' : 'text-muted opacity-60'
-      }`}
+      className={`press inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm ${s.cheered ? 'bg-selected text-text' : 'bg-raised text-muted'}`}
     >
       <span aria-hidden>🥂</span>
       <span aria-hidden className="font-mono">{s.count}</span>

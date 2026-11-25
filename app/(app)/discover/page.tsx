@@ -55,7 +55,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Pro
                 {r.friends && <p className="text-xs text-note">{r.friends.recommend} of {r.friends.total} friends recommend it</p>}
               </div>
               <div className="text-right font-mono">
-                <div className="text-lg" style={{ color }}>{formatRecommendPct(r.recommendPct)}</div>
+                <div className="text-2xl leading-none" style={{ color }}>{formatRecommendPct(r.recommendPct)}</div>
                 <div className="text-xs text-muted">{r.logCount} logs</div>
               </div>
             </li>

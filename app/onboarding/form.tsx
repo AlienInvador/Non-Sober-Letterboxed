@@ -7,9 +7,12 @@ import { takeNext } from '@/actions/auth'
 export function OnboardingForm({ dob }: { dob: string | null }) {
   const router = useRouter()
   const [error, setError] = useState('')
+  const [pending, setPending] = useState(false)
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (pending) return
+    setPending(true)
     setError('')
     const f = new FormData(e.currentTarget)
     const supabase = createBrowserClient()
@@ -23,6 +26,7 @@ export function OnboardingForm({ dob }: { dob: string | null }) {
       birthdate: dob ?? String(f.get('dob')),
     })
     if (error) {
+      setPending(false)
       setError(
         error.code === '23505' ? 'That username is taken.'
           : error.code === 'P0001' ? 'You must be 21 or older to join.'
@@ -38,15 +42,15 @@ export function OnboardingForm({ dob }: { dob: string | null }) {
       <form onSubmit={submit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2 text-sm text-muted">
           Username
-          <input name="username" required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]+" className="rounded-xl bg-raised px-4 py-3 text-base text-text" />
+          <input name="username" required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]+" autoComplete="username" autoCapitalize="none" spellCheck={false} className="rounded-control bg-raised px-4 py-3 text-base text-text" />
         </label>
         {!dob && (
           <label className="flex flex-col gap-2 text-sm text-muted">
             Date of birth
-            <input type="date" name="dob" required className="rounded-xl bg-raised px-4 py-3 text-base text-text" />
+            <input type="date" name="dob" required autoComplete="bday" className="rounded-control bg-raised px-4 py-3 text-base text-text" />
           </label>
         )}
-        <button type="submit" className="rounded-full bg-accent-fill px-6 py-3 font-semibold text-white">Join</button>
+        <button type="submit" disabled={pending} className="press rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-60">Join</button>
         {error && <p role="alert" className="text-drunk">{error}</p>}
       </form>
     </main>

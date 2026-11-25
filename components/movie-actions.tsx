@@ -7,7 +7,7 @@ import { toggleQueue } from '@/actions/queue'
 import { addToList, getMyWritableLists, type MyList } from '@/actions/lists'
 import type { Movie } from '@/lib/tmdb'
 
-const secondary = 'rounded-full bg-raised px-5 py-3 font-semibold text-text'
+const secondary = 'press rounded-full bg-raised px-5 py-3 font-semibold text-text disabled:opacity-60'
 
 function AddToList({ movie }: { movie: Movie }) {
   const [open, setOpen] = useState(false)
@@ -30,8 +30,8 @@ function AddToList({ movie }: { movie: Movie }) {
     <div className="relative" onKeyDown={(e) => { if (e.key === 'Escape' && open) { setOpen(false); trigger.current?.focus() } }}>
       <button ref={trigger} type="button" aria-expanded={open} aria-controls={panel} onClick={toggle} className={secondary}>Add to list</button>
       {open && (
-        <div id={panel} className="absolute left-0 top-full z-30 mt-2 w-72 rounded-[12px] bg-raised p-3 shadow-lg">
-          {lists === null && <p className="text-sm text-faint">Loading...</p>}
+        <div id={panel} className="absolute left-0 top-full z-30 mt-2 w-72 origin-top-left rounded-control bg-raised p-3 shadow-lg animate-in fade-in zoom-in-95 duration-150 ease-out-soft">
+          {lists === null && <p className="text-sm text-muted">Loading…</p>}
           {lists?.map((l) => (
             <button key={l.id} type="button" onClick={() => add(l.id, l.title)} className="block w-full rounded-control px-3 py-2 text-left text-sm hover:bg-card">
               {l.title}{l.crewName && <span className="ml-2 text-xs text-muted">{l.crewName}</span>}
@@ -42,7 +42,7 @@ function AddToList({ movie }: { movie: Movie }) {
               <NewListForm onCreated={(id) => { setCreating(false); getMyWritableLists().then(setLists); add(id, 'your new list') }} />
             </div>
           ) : (
-            <button type="button" onClick={() => setCreating(true)} className="mt-1 block w-full rounded-control px-3 py-2 text-left text-sm text-accent hover:bg-card">New list…</button>
+            <button type="button" onClick={() => setCreating(true)} className="mt-1 block w-full rounded-control px-3 py-2 text-left text-sm text-note hover:bg-card">New list…</button>
           )}
           {msg && <p role="status" className="mt-2 px-3 text-sm text-muted">{msg}</p>}
         </div>
@@ -58,7 +58,7 @@ export function MovieActions({ movie, queued: initialQueued = false }: { movie: 
   const [pending, start] = useTransition()
   return (
     <div className="mt-6 flex flex-wrap gap-3">
-      <button type="button" onClick={() => open(movie)} className="rounded-full bg-accent-fill px-5 py-3 font-semibold text-white">
+      <button type="button" onClick={() => open(movie)} className="press rounded-full bg-accent-fill px-5 py-3 font-semibold text-white">
         Log a sesh
       </button>
       <SendRecButton movie={movie} />

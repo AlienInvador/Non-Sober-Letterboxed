@@ -25,7 +25,7 @@ export function NavRail({ username }: { username: string }) {
             <Link
               href={i.href}
               aria-current={isActive(path, i.href) ? 'page' : undefined}
-              className="block rounded-control px-3 py-2 text-muted aria-[current=page]:bg-card aria-[current=page]:text-text"
+              className="block rounded-control px-3 py-2 text-muted transition-colors duration-150 hover:text-text aria-[current=page]:bg-card aria-[current=page]:text-text"
             >
               {i.label}
             </Link>
@@ -34,7 +34,7 @@ export function NavRail({ username }: { username: string }) {
       </ul>
       <LogButton />
       <form action={signOut} className="mt-auto">
-        <button type="submit" className="rounded-control px-3 py-2 text-sm text-muted">Log out</button>
+        <button type="submit" className="rounded-control px-3 py-2 text-sm text-muted transition-colors duration-150 hover:text-text">Log out</button>
       </form>
     </nav>
   )

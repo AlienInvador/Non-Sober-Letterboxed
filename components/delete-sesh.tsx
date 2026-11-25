@@ -21,7 +21,8 @@ export function DeleteSesh({ sessionId }: { sessionId: string }) {
           <button type="button" disabled={pending} onClick={run} className="h-9 rounded-full bg-drunk px-4 text-sm font-semibold text-bg">
             Delete for real?
           </button>
-          <button type="button" disabled={pending} onClick={() => setArmed(false)} className="h-9 rounded-full px-3 text-sm text-muted">Cancel</button>
+          {/* focus moves to Cancel so the keyboard user isn't dropped to the page and a second Enter can't delete */}
+          <button type="button" autoFocus disabled={pending} onClick={() => setArmed(false)} className="h-9 rounded-full bg-raised px-3 text-sm text-text">Cancel</button>
         </>
       ) : (
         <button type="button" onClick={() => { setError(''); setArmed(true) }} className="h-9 rounded-full px-3 text-sm text-muted underline underline-offset-2">

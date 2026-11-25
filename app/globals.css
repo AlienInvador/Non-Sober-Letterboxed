@@ -56,14 +56,28 @@ body {
   @apply bg-bg font-sans text-text antialiased;
 }
 
-.font-display {
-  font-variation-settings: "SOFT" 100, "WONK" 1;
-  letter-spacing: -0.025em;
+/* layered so tracking-* and transition utilities on the same element still win */
+@layer components {
+  .font-display {
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+    /* small display sizes stay near 0; large headings set their own tighter tracking */
+    letter-spacing: -0.01em;
+  }
+
+  /* press feedback for buttons: confirms the tap before the result lands */
+  .press { transition: scale 150ms var(--ease-out-soft); }
+  .press:active:not(:disabled) { scale: .96; }
+}
+
+@layer base {
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }
@@ -72,7 +86,8 @@ body {
 .page-in { animation: page-in 200ms var(--ease-out-soft) backwards; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
-.rise { animation: rise 240ms var(--ease-out-soft) both; animation-delay: calc(var(--i, 0) * 35ms); }
+/* only the first 6 items stagger; the rest arrive with the sixth */
+.rise { animation: rise 240ms var(--ease-out-soft) both; animation-delay: calc(min(var(--i, 0), 5) * 35ms); }
 
 @keyframes slide { to { transform: translateX(-50%); } }
 .marquee-track { display: flex; width: max-content; animation: slide 40s linear infinite; }

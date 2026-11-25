@@ -32,7 +32,7 @@ export function PosterFan({ items }: { items: FanItem[] }) {
         )
       })}
       <div className="absolute right-[4%] top-[26px] z-[9] flex w-[min(300px,70%)] rotate-2 flex-col gap-1.5 rounded-[18px] bg-text px-5 py-[18px] text-bg shadow-[0_24px_48px_rgba(0,0,0,.35)]">
-        <span className="text-[13px] font-semibold text-[#6E6259]">maya logged · 11:42 pm</span>
+        <span className="text-[13px] font-semibold text-[#6E6259]">jules logged · 11:42 pm</span>
         <span className="font-display text-[22px] font-semibold leading-tight">Paprika</span>
         <span className="inline-flex items-center gap-2 text-sm font-semibold">
           <span className="size-2 rounded-full bg-[#5E8C1A]" />

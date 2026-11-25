@@ -33,7 +33,7 @@ function TagRow({ tag }: { tag: TagItem }) {
               watchedOn: tag.watchedOn, fromTagSessionId: tag.sessionId,
               companionIds: tag.taggerIsFriend ? [tag.taggerId] : [],
             })}
-            className="font-semibold text-accent"
+            className="font-semibold text-note"
           >
             Approve
           </button>

@@ -3,12 +3,13 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Reorder } from 'motion/react'
+import { GripVertical } from 'lucide-react'
 import { removeFromList, reorderList, updateList } from '@/actions/lists'
 import { moveItem } from '@/lib/reorder'
 import type { ListPage } from '@/lib/queries/lists'
 
 type Item = ListPage['items'][number]
-const btn = 'rounded-full bg-raised px-3 py-1 text-xs text-muted aria-disabled:opacity-40'
+const btn = 'h-9 rounded-full bg-raised px-3 text-xs text-muted aria-disabled:opacity-40'
 const field = 'rounded-control bg-card px-3 py-2 text-sm text-text'
 
 export function ListItems({ listId, initial, canWrite }: { listId: string; initial: Item[]; canWrite: boolean }) {
@@ -71,7 +72,7 @@ export function ListItems({ listId, initial, canWrite }: { listId: string; initi
               onDragEnd={() => canWrite && persist(latest.current)}
               className="flex items-center gap-4 bg-bg py-4"
             >
-              {canWrite && <span aria-hidden className="cursor-grab select-none text-faint">⋮⋮</span>}
+              {canWrite && <GripVertical aria-hidden className="size-4 shrink-0 cursor-grab text-muted" />}
               <Link href={`/movie/${m.tmdbId}`} className="aspect-[2/3] w-14 shrink-0 overflow-hidden rounded-poster bg-raised">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {poster && <img src={poster} alt="" draggable={false} className="size-full object-cover" />}
@@ -125,7 +126,7 @@ export function EditListForm({ list }: { list: Pick<ListPage, 'id' | 'title' | '
           <option value="public">Public</option>
         </select>
         {error && <p role="alert" className="text-sm text-drunk">{error}</p>}
-        <button disabled={pending} className="self-start rounded-full bg-accent-fill px-5 py-2 text-sm font-semibold text-white">Save</button>
+        <button disabled={pending} className="press self-start rounded-full bg-accent-fill px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">Save</button>
       </form>
     </details>
   )

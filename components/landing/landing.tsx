@@ -9,7 +9,7 @@ export type Pick = { title: string; tmdbId: number; influence: 'drunk' | 'high' 
 
 const WRAP = 'mx-auto w-full max-w-[1200px] px-[clamp(16px,4vw,48px)]'
 const BTN =
-  'inline-flex h-[52px] items-center justify-center rounded-full px-[26px] text-base font-semibold transition-transform duration-200 ease-out-soft hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0'
+  'inline-flex h-[52px] items-center justify-center rounded-full px-[26px] text-base font-semibold transition-transform duration-200 ease-out-soft hover:-translate-y-0.5 active:scale-[.96] motion-reduce:transition-none motion-reduce:hover:translate-y-0'
 const EYEBROW = 'font-mono text-[13px] text-note'
 const H2 = 'font-display font-semibold leading-[1.02] tracking-[-0.025em] text-[clamp(36px,5vw,56px)]'
 const LEAD = 'max-w-[460px] text-lg leading-[1.7] text-muted'
@@ -119,8 +119,8 @@ export function Landing({ picks }: { picks: Pick[] }) {
                   </span>
                   <span className="font-mono font-bold">{pct}% recommend it</span>
                 </div>
-                <div aria-hidden="true" className="h-2 rounded-[9px] bg-bg">
-                  <div className="h-2 rounded-[9px]" style={{ width: `${pct}%`, background: fill }} />
+                <div aria-hidden="true" className="h-2 rounded-full bg-bg">
+                  <div className="h-2 rounded-full" style={{ width: `${pct}%`, background: fill }} />
                 </div>
               </div>
             ))}
@@ -137,7 +137,7 @@ export function Landing({ picks }: { picks: Pick[] }) {
           <h2 className={H2}>Your couch, your crew, your list.</h2>
           <p className={LEAD}>Start a crew for movie night. Share a feed, build a queue together, and tag who was there. Private by default.</p>
           <p className="mt-2 font-note text-[30px] font-semibold leading-[1.3] text-note">
-            &quot;we finally stopped arguing about what to put on.&quot; <span className="text-[22px] text-muted">— couch club</span>
+            no more arguing about what to put on.
           </p>
         </div>
       </Reveal>

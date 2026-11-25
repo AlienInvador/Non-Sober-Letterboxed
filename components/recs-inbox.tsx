@@ -25,7 +25,7 @@ function RecRow({ rec }: { rec: RecItem }) {
         <p className="font-note text-2xl text-note">{rec.from} says watch {rec.movie.title} {stateWord(rec.influence)}</p>
         {rec.note && <p className="mt-1 text-body">{rec.note}</p>}
         <div className="mt-2 flex gap-4 text-sm">
-          <Link href={`/movie/${rec.movie.tmdbId}`} className="font-semibold text-accent">See movie</Link>
+          <Link href={`/movie/${rec.movie.tmdbId}`} className="font-semibold text-note">See movie</Link>
           {rec.dismissible && (
             <button type="button" disabled={pending} onClick={() => start(async () => { await dismissRec(rec.id) })} className="text-muted disabled:opacity-40">
               Dismiss

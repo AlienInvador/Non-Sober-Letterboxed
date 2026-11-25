@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { acceptFriend, removeFriend, requestFriend, searchUsers, type FriendProfile, type Relation } from '@/actions/friends'
 
 type Hit = FriendProfile & { relation: Relation }
@@ -28,7 +28,13 @@ export function FriendsClient({ username, friends, incoming, sent }: {
   const [copied, setCopied] = useState(false)
   const [, start] = useTransition()
 
-  const search = (v: string) => { setQ(v); start(async () => setHits(await searchUsers(v))) }
+  const run = useRef(0)
+  // ignore stale responses: a slow result for "ab" must not replace the one for "abc"
+  const search = (v: string) => {
+    setQ(v)
+    const id = ++run.current
+    start(async () => { const r = await searchUsers(v); if (id === run.current) setHits(r) })
+  }
   const act = (fn: (id: string) => Promise<{ ok: boolean; error?: string }>, id: string) =>
     start(async () => {
       const r = await fn(id)
