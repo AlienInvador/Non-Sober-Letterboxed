@@ -20,11 +20,11 @@ export function QueueRow({ movie }: { movie: Movie }) {
         {movie.title}
         {movie.year && <span className="ml-2 text-sm text-muted">{movie.year}</span>}
       </Link>
-      <button type="button" onClick={() => open(movie)} className="rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-white">Log a sesh</button>
+      <button type="button" onClick={() => open(movie)} className="press rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-white">Log a sesh</button>
       <button
         type="button" aria-label={`Remove ${movie.title} from your queue`}
         onClick={() => !pending && start(async () => { const r = await removeFromQueue(movie.tmdbId); setError(r.ok ? '' : r.error ?? 'Failed') })}
-        className="rounded-full bg-raised px-3 py-2 text-sm text-muted"
+        className="press rounded-full bg-raised px-3 py-2 text-sm text-muted disabled:opacity-60" disabled={pending}
       >
         Remove
       </button>

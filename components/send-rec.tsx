@@ -59,8 +59,8 @@ export function SendRecForm({ movie, influence: initialInfluence, sessionId, onD
       <h3 className="font-display text-xl">Send {movie.title}</h3>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm text-muted">Friends</legend>
-        {ctx === null && <span className="text-sm text-faint">Loading...</span>}
-        {ctx?.friends.length === 0 && <span className="text-sm text-faint">No friends yet.</span>}
+        {ctx === null && <span className="text-sm text-muted">Loading…</span>}
+        {ctx?.friends.length === 0 && <span className="text-sm text-muted">No friends yet.</span>}
         {ctx?.friends.map((f) => (
           <label key={f.id} className="flex items-center gap-3 text-sm">
             <input
@@ -100,11 +100,11 @@ export function SendRecForm({ movie, influence: initialInfluence, sessionId, onD
       <label className="flex flex-col gap-1 text-sm text-muted">
         Note (optional)
         <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={140} rows={2} className={field} />
-        <span className="self-end text-xs text-faint">{note.length}/140</span>
+        <span className="self-end text-xs tabular-nums text-muted">{note.length}/140</span>
       </label>
       {error && <p role="alert" className="text-sm text-drunk">{error}</p>}
-      <button type="button" disabled={!canSend} onClick={send} className="rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-40">
-        {sending ? 'Sending...' : 'Send'}
+      <button type="button" disabled={!canSend} onClick={send} className="press rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-40">
+        {sending ? 'Sending…' : 'Send'}
       </button>
     </div>
   )
@@ -114,12 +114,13 @@ export function SendRecButton({ movie }: { movie: RecMovie }) {
   const [open, setOpen] = useState(false)
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger className="rounded-full bg-raised px-5 py-3 font-semibold text-text">Send a rec</Dialog.Trigger>
+      <Dialog.Trigger className="press rounded-full bg-raised px-5 py-3 font-semibold text-text">Send a rec</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/55" />
+        {/* sheet and scrim share one clock; the sheet leaves the way it came */}
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/55 duration-300 ease-out-soft data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:duration-200" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92vh] max-w-xl overflow-y-auto rounded-t-[20px] bg-raised p-6 text-text"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92vh] max-w-xl overflow-y-auto rounded-t-[20px] bg-raised p-6 text-text duration-300 ease-out-soft data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=closed]:duration-200"
         >
           <Dialog.Title className="sr-only">Send a rec</Dialog.Title>
           <SendRecForm movie={movie} onDone={() => setOpen(false)} />

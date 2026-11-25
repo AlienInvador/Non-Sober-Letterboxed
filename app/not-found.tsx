@@ -7,7 +7,7 @@ export default function NotFound() {
       <h1 className="font-display text-4xl">Nothing here</h1>
       <p className="text-muted">That page does not exist, or it moved.</p>
       <div>
-        <Link href="/" className="inline-block rounded-full bg-accent-fill px-6 py-3 font-semibold text-white">Back to Tonight</Link>
+        <Link href="/" className="press inline-block rounded-full bg-accent-fill px-6 py-3 font-semibold text-white">Back to Tonight</Link>
       </div>
     </main>
   )

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { addCrewMemberByUsername, createCrew, leaveCrew, removeCrewMember } from '@/actions/crews'
 
 const input = 'h-10 rounded-control bg-raised px-4 text-text'
-const pill = 'rounded-full bg-accent-fill px-5 py-2 text-sm font-semibold text-white'
+const pill = 'press rounded-full bg-accent-fill px-5 py-2 text-sm font-semibold text-white disabled:opacity-60'
 
 function useAct() {
   const [error, setError] = useState('')

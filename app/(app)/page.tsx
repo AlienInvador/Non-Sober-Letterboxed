@@ -7,7 +7,6 @@ import { createServerClient } from '@/lib/supabase/server'
 import { posterUrl } from '@/lib/tmdb'
 import { formatRecommendPct } from '@/lib/stats'
 import { influenceLabel } from '@/lib/influence'
-import { tokens } from '@/design/tokens'
 import { SessionCard } from '@/components/session-card'
 import { EmptyState } from '@/components/empty-state'
 import { InviteLink } from '@/components/invite-link'
@@ -48,7 +47,7 @@ export default async function Tonight() {
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent" />
           <div className="relative">
             <p className="font-note text-2xl text-note">{hero.eyebrow}</p>
-            <h2 className="font-display mt-1 text-5xl">{hero.movie.title}</h2>
+            <h2 className="font-display mt-1 text-5xl tracking-[-0.022em]">{hero.movie.title}</h2>
             {hero.pct !== null && (
               <p className="mt-2 font-mono text-sm text-body">
                 {formatRecommendPct(hero.pct)} say watch it {influenceLabel(hero.influence).toLowerCase()}
@@ -78,7 +77,7 @@ export default async function Tonight() {
                     <span className="mt-2 block font-medium">{movie.title}</span>
                   </Link>
                   {influence && pct !== null && (
-                    <p className="mt-1 flex items-center gap-2 font-mono text-xs" style={{ color: tokens.color[influence] }}>
+                    <p className="mt-1 flex items-center gap-2 font-mono text-xs text-body">
                       <InfluenceDot influence={influence} />
                       {formatRecommendPct(pct)} say {influenceLabel(influence).toLowerCase()}
                     </p>

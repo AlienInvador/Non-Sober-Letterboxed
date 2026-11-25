@@ -8,6 +8,7 @@ import { tokens } from '@/design/tokens'
 import { SessionCard } from '@/components/session-card'
 import { EmptyState } from '@/components/empty-state'
 import { FriendAction } from '@/components/friend-action'
+import { InfluenceDot } from '@/components/influence-chip'
 
 const ORDER: Influence[] = ['drunk', 'high', 'both', 'sober']
 
@@ -31,7 +32,7 @@ export default async function ProfilePage({ params, searchParams }: {
   }
 
   return (
-    <main className="max-w-3xl p-10">
+    <main className="mx-auto max-w-3xl px-6 py-8 md:px-10">
       <header className="flex items-center gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" className="size-20 rounded-full object-cover" />
@@ -46,7 +47,7 @@ export default async function ProfilePage({ params, searchParams }: {
       {isSelf && (
         <nav aria-label="Your stuff" className="mt-5 flex flex-wrap items-center gap-3 text-sm">
           <Link href="/friends" className="rounded-full bg-raised px-4 py-1.5">
-            Friends{requests > 0 && <span className="ml-2 font-mono text-accent">{requests} {requests === 1 ? 'request' : 'requests'}</span>}
+            Friends{requests > 0 && <span className="ml-2 font-mono text-note">{requests} {requests === 1 ? 'request' : 'requests'}</span>}
           </Link>
           <Link href="/queue" className="rounded-full bg-raised px-4 py-1.5">Queue</Link>
           <Link href="/settings" className="rounded-full bg-raised px-4 py-1.5">Settings</Link>
@@ -65,7 +66,7 @@ export default async function ProfilePage({ params, searchParams }: {
               {shown.map((k) => <span key={k} style={{ width: `${breakdown[k]}%`, background: tokens.color[k] }} />)}
             </div>
             <ul className="mt-2 flex flex-wrap gap-x-4 text-sm">
-              {shown.map((k) => <li key={k} style={{ color: tokens.color[k] }}>{influenceLabel(k)} <span className="font-mono">{breakdown[k]}%</span></li>)}
+              {shown.map((k) => <li key={k} className="flex items-center gap-2 text-body"><InfluenceDot influence={k} />{influenceLabel(k)} <span className="font-mono">{breakdown[k]}%</span></li>)}
             </ul>
           </div>
         )}

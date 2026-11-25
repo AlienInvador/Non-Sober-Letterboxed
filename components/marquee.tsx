@@ -19,7 +19,7 @@ export function Marquee({ items }: { items: Tick[] }) {
   return (
     <section aria-label="Tonight's ticker" className="relative mt-[120px]">
       <svg aria-hidden="true" viewBox="0 0 1440 40" preserveAspectRatio="none" className="block h-10 w-full">
-        <path d="M0 40 C 240 0, 480 0, 720 20 S 1200 40, 1440 6 L1440 40 Z" fill="#7444EC" />
+        <path d="M0 40 C 240 0, 480 0, 720 20 S 1200 40, 1440 6 L1440 40 Z" className="fill-accent-fill" />
       </svg>
       <div className="overflow-hidden bg-accent-fill py-[22px]">
         <div className="marquee-track" data-testid="marquee-track">
@@ -28,7 +28,7 @@ export function Marquee({ items }: { items: Tick[] }) {
         </div>
       </div>
       <svg aria-hidden="true" viewBox="0 0 1440 40" preserveAspectRatio="none" className="block h-10 w-full">
-        <path d="M0 0 C 300 40, 600 30, 860 12 S 1260 0, 1440 30 L1440 0 Z" fill="#7444EC" />
+        <path d="M0 0 C 300 40, 600 30, 860 12 S 1260 0, 1440 30 L1440 0 Z" className="fill-accent-fill" />
       </svg>
     </section>
   )

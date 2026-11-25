@@ -40,7 +40,7 @@ function TagRow({ tag }: { tag: TagItem }) {
               if (tag.subject.kind === 'movie') open(tag.subject.movie, preset)
               else open(undefined, { ...preset, place: { name: tag.subject.place.name, category: tag.subject.place.category as PlaceCategory | null } })
             }}
-            className="font-semibold text-accent"
+            className="font-semibold text-note"
           >
             Approve
           </button>

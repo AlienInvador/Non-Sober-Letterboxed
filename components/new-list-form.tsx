@@ -27,7 +27,7 @@ export function NewListForm({ crewId, onCreated, label = 'Create' }: { crewId?: 
         <option value="friends">Friends</option>
         <option value="public">Public</option>
       </select>
-      <button disabled={pending} className="rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-white">{label}</button>
+      <button disabled={pending} className="press rounded-full bg-accent-fill px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{label}</button>
       {error && <p role="alert" className="w-full text-sm text-drunk">{error}</p>}
     </form>
   )

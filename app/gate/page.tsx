@@ -10,7 +10,7 @@ export default function Gate() {
     <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center gap-5 px-6 py-12">
       <p className="font-note text-2xl text-note">come on in, pull up a cushion</p>
       <motion.h1
-        className="font-display text-5xl"
+        className="font-display text-5xl tracking-[-0.022em]"
         initial={reduce ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
@@ -23,9 +23,9 @@ export default function Gate() {
       <form action={action} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2 text-sm text-muted">
           Date of birth
-          <input type="date" name="dob" required className="rounded-xl bg-raised px-4 py-3 text-base text-text" />
+          <input type="date" name="dob" required autoComplete="bday" className="rounded-control bg-raised px-4 py-3 text-base text-text" />
         </label>
-        <button type="submit" disabled={pending} className="rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-60">
+        <button type="submit" disabled={pending} className="press rounded-full bg-accent-fill px-6 py-3 font-semibold text-white disabled:opacity-60">
           Enter
         </button>
         {state?.reason === 'under21' && (
